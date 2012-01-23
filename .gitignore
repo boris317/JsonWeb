@@ -1,3 +1,7 @@
 *.pyc
 *.egg-info
 dist/*
+.coverage
+*.egg-info
+*.egg
+dev_env

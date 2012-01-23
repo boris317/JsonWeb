@@ -20,6 +20,10 @@ setup(name='JsonWeb',
       install_requires=[
           # -*- Extra requirements: -*-
       ],
+      setup_requires=[
+          'nose>=1.0',
+          'pastescript'
+      ],
       entry_points="""
       # -*- Entry points: -*-
       """,
