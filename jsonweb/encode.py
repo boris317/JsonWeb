@@ -84,7 +84,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
         @to_object(suppress=["guid", "__type__"])
         ...
                           
-    If you need more control over how your object is encoded you can specify ``handler`` callable.
+    If you need more control over how your object is encoded you can specify a ``handler`` callable.
     It should accept one argument, which will be the object to encode, and it should return
     a ``dict``.
     
