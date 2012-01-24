@@ -72,10 +72,10 @@ class ObjectHook(object):
     def decode_obj(self, obj):
         """        
         This method is called for every json obj decoded in a json string. The presense
-        of the key __type__ in obj will trigger a lookup in self.factories. If a factory is
-        not found for __type__ then an ObjectNotFoundError is raised. If a factory is found it will
+        of the key ``__type__`` in obj will trigger a lookup in self.factories. If a factory is
+        not found for ``__type__`` then an ObjectNotFoundError is raised. If a factory is found it will
         be called with "obj" as it only argument. If all goes well it should return a new
-        python instant of type __type__.        
+        python instant of type ``__type__``.        
         """
         if "__type__" not in obj:
             return obj
