@@ -84,9 +84,9 @@ def to_object(cls_type=None, suppress=[], handler=None):
         @to_object(suppress=["guid", "__type__"])
         ...
                           
-    ``handler`` lets you specify a callable that should return the a python dict ready to encode
-    to json. Use a ``handler`` if you want greater control over how your object is encoded
-    to json. The callable should except one agrument that is an instance of the decorated class.
+    If you need more control over how your object is encoded you can specify ``handler`` callable.
+    It should accept one argument, which will be the object to encode, and it should return
+    a ``dict``.
     
     Here is an example::
         
@@ -172,12 +172,12 @@ def json_web_encoder(cls=None, object_handler=None, **kw):
     ``cls`` takes a :class:`type` object(a class) and it is instantiated later. If you 
     wish to pass keyword arguments to the class when it is instantiated you should use this wrapper.
     
-    ``cls`` is a subclass of :class:`JSONEncoder` which defaults to :class:`JsonWebEncoder`.
+    * ``cls`` is a subclass of :class:`JSONEncoder` which defaults to :class:`JsonWebEncoder`.
     
-    ``object_handler`` is the callable responsable for returning a python dict from a :mod:`jsonweb` 
-    decorated class instance which defaults to :func:`to_json_object`. 
+    * ``object_handler`` is the callable responsable for returning a python dict from a :mod:`jsonweb` 
+      decorated class instance which defaults to :func:`to_json_object`. 
     
-    Any other ``kw`` arguments will be passed to ``cls`` during instantiation
+    * Any other ``kw`` arguments will be passed to ``cls`` during instantiation.
     
     Here is an example::
     
