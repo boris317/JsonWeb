@@ -67,7 +67,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
                                     
     Encoded as json::
         
-        {"__type__": "PersonObject", "name": "Shawn", "last_name": "Adams"}
+        {"__type__": "PersonObject", "first_name": "Shawn", "last_name": "Adams"}
                   
     If you would like to leave certian attributes out of the resultant json object you specify them 
     with the ``suppress`` kw argument::
