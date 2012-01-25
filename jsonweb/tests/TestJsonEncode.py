@@ -17,18 +17,18 @@ class TestJsonEnecode(unittest.TestCase):
         
         self.assertEqual(json_obj, {"first_name": "shawn", "last_name": "adams"})
         
-    def test_json_web_encoder_wrapper(self):
+    def test_subclass_json_web_encoder(self):
         """
         Test the wrapper function ``json_web_encoder``. Ensure it passes
         keyword agrument to the JsonWebEncoder when it is instiated.
         """
-        from jsonweb.encode import to_object, json_web_encoder, to_json_object
+        from jsonweb.encode import to_object, JsonWebEncoder
         
         message = []
-        
-        def my_object_handler(obj):
-            message.append("my_object_handler")
-            return to_json_object(obj)
+        class MyJsonWebEncoder(JsonWebEncoder):
+            def object_handler(self, obj):
+                message.append("my_object_handler")
+                return self._default_object_handler(obj)
         
         @to_object(suppress=["foo", "__type__"])
         class Person(object):
@@ -38,7 +38,7 @@ class TestJsonEnecode(unittest.TestCase):
                 self.last_name = last_name
         
         person = Person("shawn", "adams")
-        json_obj = json.loads(json.dumps(person, cls=json_web_encoder(object_handler=my_object_handler)))
+        json_obj = json.loads(json.dumps(person, cls=MyJsonWebEncoder))
         
         self.assertEqual(json_obj, {"first_name": "shawn", "last_name": "adams"})
         self.assertEqual(message[0], "my_object_handler")

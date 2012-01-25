@@ -1,8 +1,46 @@
+"""
+Sometimes it would be nice to have :func:`json.loads` return us class instances. For example if you
+do something like this ::
+
+    person = json.loads('{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}')
+    
+it would be pretty cool if instead of ``person`` being a :class:`dict` it was an instance of a class we defined called :class:`Person`.
+Luckily the python standard :mod:`json` module provides support for *class hinting* in the form of the ``object_hook`` keyword
+argument accepted by :func:`json.loads`.
+
+The code in :mod:`jsonweb.decode` uses this *object_hook* interface to accomplish the awesomeness you are about to witness.
+Lets turn that ``person`` :class:`dict` into a proper :class:`Person` instance. ::
+
+    >>> import json
+    >>> from jsonweb.decode import from_obj, object_hook
+
+    >>> @from_object()
+    ... class Person(object):
+    ...     def __init__(self, first_name, last_name):
+    ...         self.first_name = first_name
+    ...         self.last_name = last_name
+
+    >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
+    >>> person = json.loads(person_json, object_hook=object_hook)
+
+    >>> print type(person)
+    <class 'Person'>
+    >>> print person.first_name
+    "Shawn"
+
+But how did it know how to instantiate the :class:`Person` class? Take a look at the :func:`from_object` decorator for
+a detail explination on how to use it.
+"""
+
+import inspect
 import json
 from datetime import datetime
 
 _DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
+
+class JsonWebError(Exception):
+    pass
 
 class JsonDecodeError(Exception):
     """
@@ -59,7 +97,24 @@ def json_request(func):
     wrapper.__doc__ = func.__doc__
     return wrapper
 
-
+class JsonWebObjectHandler(object):
+    def __init__(self, args, kw_args=None):
+        self.args = args
+        self.kw_args = kw_args
+        
+    def __call__(self, cls, obj):
+        cls_args = []
+        cls_kw_args = {}
+        
+        for arg in self.args:
+            cls_args.append(obj[arg])
+            
+        if self.kw_args:
+            for key, default in self.kw_args:
+                cls_kw_args[key] = obj.get(key, default)
+                
+        return cls(*cls_args, **cls_kw_args)
+            
 class ObjectHook(object):
     """
     Class responsible for decoding json objects to python classes. 
@@ -107,12 +162,40 @@ class ObjectHook(object):
     def add_handler(self, cls, handler, type_name=None, schema=None):
         self.handlers[type_name or cls.__name__] = (handler, cls, schema)
 
-decode = ObjectHook()
+def get_arg_spec(func):
+    arg_spec = inspect.getargspec(func)
+    args = arg_spec.args
+    
+    try:   
+        if args[0] == "self":
+            del args[0]
+    except IndexError:
+        pass
+    
+    if not args:
+        return None    
+    
+    kw_args = []
+    if arg_spec.defaults:
+        for default in reversed(arg_spec.defaults):
+            kw_args.append((args.pop(), default))
+        
+    return args, kw_args
 
+def get_jsonweb_handler(cls):
+    arg_spec = get_arg_spec(cls.__init__)
+    if arg_spec is None:
+        raise JsonWebError("Unable to generate an object_hook handler from %s's `__init__` method." % cls.__name__)
+    args, kw = get_arg_spec(cls.__init__)
+
+    return JsonWebObjectHandler(args, kw or None)
+    
+decode = ObjectHook()
 #import from_object and decorate your classes with it.
-def from_object(handler, type_name=None, schema=None):
+def from_object(handler=None, type_name=None, schema=None):
     def wrapper(cls):
-        decode.add_handler(cls, handler, type_name, schema)
+        obj_handler = handler or get_jsonweb_handler(cls)
+        decode.add_handler(cls, obj_handler, type_name, schema)
         return cls
     return wrapper
 

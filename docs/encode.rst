@@ -12,6 +12,6 @@ Decorators
 JsonWebEncoder
 --------------
 
-.. autofunction:: json_web_encoder
 .. autoclass:: JsonWebEncoder
-.. autofunction:: to_json_object
+   :members:
+   :private-members: _default_object_handler
