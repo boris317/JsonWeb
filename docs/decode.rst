@@ -2,3 +2,8 @@
 ===================================================
 
 .. automodule:: jsonweb.decode
+
+Decorators
+----------
+
+.. autofunction:: from_object

@@ -7,7 +7,7 @@ your python class instances to json Here is a quick example::
     >>> from jsonweb.encode import to_object, JsonWebEncoder
     
     >>> @to_object()
-    >>> class DataModel(object):
+    ... class DataModel(object):
     ...      def __init__(self, id, value):
     ...          self.id = id
     ...          self.value = value
@@ -44,7 +44,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
     Here is an example::
     
         >>> @to_object()
-        >>> class Person(object):
+        ... class Person(object):
         ...     def __init__(self, first_name, last_name):
         ...         self.first_name = first_name
         ...         self.last_name = last_name
@@ -58,7 +58,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
     ``__name__`` attribute. You can specify your own value with ``cls_type``::
                         
         >>> @to_object(cls_type="PersonObject")
-        >>> class Person(object):
+        ... class Person(object):
         ...     def __init__(self, first_name, last_name):
         ...         self.first_name = first_name
         ...         self.last_name = last_name
@@ -71,8 +71,8 @@ def to_object(cls_type=None, suppress=[], handler=None):
     with the ``suppress`` kw argument::
         
         >>> @to_object(suppress=["guid"])
-        >>> class Person(object):
-        >>>     def __init__(self, first_name, last_name):
+        ... class Person(object):
+        ...     def __init__(self, first_name, last_name):
         ...         self.guid = 12334
         ...         self.first_name = first_name
         ...         self.last_name = last_name
@@ -96,7 +96,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
         ...     return {"FirstName": person.first_name, "LastName": person.last_name}
             
         >>> @to_object(handler=person_encoder)
-        >>> class Person(object):
+        ... class Person(object):
         ...     def __init__(self, first_name, last_name):
         ...         self.guid = 12334
         ...         self.first_name = first_name
