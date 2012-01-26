@@ -29,7 +29,7 @@ Lets turn that ``person`` :class:`dict` into a proper :class:`Person` instance. 
     "Shawn"
 
 But how did it know how to instantiate the :class:`Person` class? Take a look at the :func:`from_object` decorator for
-a detail explination on how to use it.
+a detailed explanation of its use.
 """
 
 import inspect

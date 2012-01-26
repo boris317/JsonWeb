@@ -61,7 +61,7 @@ class ObjectSchema(Validator):
             return "%s.%s" % (cls, k)
         return cls 
                 
-class ListSchema(Validator):
+class List(Validator):
     def __init__(self, validator, **kw):
         Validator.__init__(self, **kw)
         self.validator = validator
@@ -69,11 +69,19 @@ class ListSchema(Validator):
     def validate(self, item):
         if not isinstance(item, list):
             raise ValidationError("Expected list got %s instead" % self._type_name(item))
-        try:
-            return [self.validator.to_obj(obj) for i, obj in enumerate(item)]
-        except ValidationError, e:
-            e.obj_index = i
-            raise e
+        validated_objs = []
+        errors = []
+
+        for i, obj in enumerate(item):
+            try:
+                validated_objs.append(self.validator.validate(obj))
+            except ValidationError, e:
+                e.error_index = i
+                errors.append(e)
+        if errors:
+            raise ValidationError("", errors=errors)
+        return validated_objs
+            
             
 class EnsureType(Validator):
     def __init__(self, _type):

@@ -54,7 +54,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
         '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
     
     A ``__type__`` key is automatically added to the json object.  Its value should represent
-    the object type being encoded. By default it's set to the value of decorated class's 
+    the object type being encoded. By default it is set to the value of the decorated class's 
     ``__name__`` attribute. You can specify your own value with ``cls_type``::
                         
         >>> @to_object(cls_type="PersonObject")
@@ -81,14 +81,14 @@ def to_object(cls_type=None, suppress=[], handler=None):
         >>> json.dumps(person, cls=JsonWebEncoder)
         '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'        
                 
-    You can even suppress the ``__type__`` attribute as well ::
+    You can even suppress the ``__type__`` attribute ::
     
         @to_object(suppress=["guid", "__type__"])
         ...
                           
     If you need greater control over how your object is encoded you can specify a ``handler`` callable.
-    It should accept one argument, which will be the object to encode, and it should return
-    a dict. This would overide the default object handler :func:`to_json_object`.
+    It should accept one argument, which is the object to encode, and it should return
+    a dict. This would overide the default object handler :func:`JsonWebEncoder.object_handler`.
     
     Here is an example::
         
@@ -185,28 +185,25 @@ class JsonWebEncoder(json.JSONEncoder):
                     return e_args.handler(o)
                 return self.object_handler(o)
             elif e_args.serialize_as == "json_list":
-                return list(o)
+                return self.list_handler(o)
             
         if isinstance(o, datetime):
             return o.strftime(self._DT_FORMAT)            
         return json.JSONEncoder.default(self, o)
     
-    def _default_object_handler(self, obj):
+    def object_handler(self, obj):
         """
-        This is the method actually responsible for returning a python dict from a class instance (``obj`` in this case). 
-        It is called by the :func:`JsonWebEncoder.default` method. It returns a dict containing all the key/value pairs in 
-        ``obj.__dict__``. Excluding attributes that 
+        Handles encoding instance objects of classes decorated by :func:`to_object`. Returns
+        a dict containing all the key/value pairs in ``obj.__dict__``. Excluding attributes that 
         
         * start with an underscore.
-        * were specified with the ``suppress`` keyword agrument to :func:`to_object`.
+        * were specified with the ``suppress`` keyword agrument of :func:`to_object`.
         
         The returned dict will be encoded into json.
         
-        .. note ::
+        .. note::
         
-            If you subclass :class:`JsonWebEncoder` and you want to change how all objects are handled you should
-            override :func:`object_handler` instead of this method. This way if you need the default object
-            handling for some objects you still call this method.  
+            Override this method if you wish to change how ALL objects are encoded into json objects.
             
         """        
         suppress = obj._encode.suppress
@@ -215,9 +212,18 @@ class JsonWebEncoder(json.JSONEncoder):
             json_obj["__type__"] = obj._encode.__type__
         return json_obj
     
-    def object_handler(self, obj):
+        
+    def list_handler(self, obj):
         """
-        Override this method if you wish to change how ALL objects are turned into dicts.
+        Handles encoding instance objects of classes decorated by :func:`to_list`. Simply calls
+        :class:`list` on ``obj``. Classes decorated by :func:`to_list` should define an ``__iter__``
+        method.
+        
+        .. note::
+        
+            Override this method if you wish to change how ALL objects are encoded into json lists.        
+        
+        
         """
-        return self._default_object_handler(obj)
-    
+        
+        return list(obj)

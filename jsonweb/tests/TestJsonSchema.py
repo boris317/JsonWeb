@@ -111,6 +111,19 @@ class TestJsonSchema(unittest.TestCase):
         self.assertTrue("job" in exc.errors)
         self.assertEqual(len(exc.errors["job"].errors), 2)
         
+    def test_list_schema_error(self):
+        from jsonweb.schema import ObjectSchema, List, String, ValidationError        
+        class PersonSchema(ObjectSchema):
+            first_name = String()
+            last_name = String()
+            
+        persons = [{"first_name": "shawn", "last_name": "adams"}, {"first_name": "luke"}]
+        with self.assertRaises(ValidationError) as context:
+            List(PersonSchema()).validate(persons)
+            
+        exc = context.exception
+        self.assertEqual(exc.errors[0].error_index, 1)
+        
         
         
             

@@ -14,4 +14,3 @@ JsonWebEncoder
 
 .. autoclass:: JsonWebEncoder
    :members:
-   :private-members: _default_object_handler
