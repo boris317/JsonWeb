@@ -1,7 +1,11 @@
+"""
 
-class ValidationError(Exception):
+"""
+from jsonweb.exceptions import JsonWebError
+
+class ValidationError(JsonWebError):
     def __init__(self, message, errors=None):
-        Exception.__init__(self, message)
+        JsonWebError.__init__(self, message, "VALIDATION_ERROR")
         self.errors = errors
         
 class Validator(object):
@@ -25,6 +29,10 @@ class Validator(object):
         raise NotImplemented
     def _type_name(self, obj):
         return obj.__class__.__name__
+    
+"""
+Complex validators
+"""
 
 class SchemaMeta(type):
     def __new__(meta, class_name, bases, class_dict):
@@ -81,7 +89,12 @@ class List(Validator):
         if errors:
             raise ValidationError("", errors=errors)
         return validated_objs
-            
+
+    
+"""
+Simple Validators
+"""
+    
             
 class EnsureType(Validator):
     def __init__(self, _type):

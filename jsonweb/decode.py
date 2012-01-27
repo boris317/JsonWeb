@@ -35,42 +35,40 @@ at the :func:`from_object` decorator for a detailed explanation.
 import inspect
 import json
 from datetime import datetime
+from jsonweb.exceptions import JsonWebError
 
 _DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
-class JsonWebError(Exception):
-    pass
-
-class JsonDecodeError(Exception):
+class JsonDecodeError(JsonWebError):
     """
     Raised for mailformed json.
     """
-    def __init__(self, message):
-        Exception.__init__(self, message, "JSON_PARSE_ERROR")
+    def __init__(self, message, error_sub_type=None, **extras):
+        JsonWebError.__init__(self, message, "JSON_PARSE_ERROR", error_sub_type, **extras)
         
-class ObjectDecodeError(Exception):
+class ObjectDecodeError(JsonWebError):
     """
     Raisded when python containers (dicts and lists) cannot be decoded into
     complex types. These exceptions are raised from within an ObjectHook instance.
     """
-    def __init__(self, message, **extras):
-        Exception.__init__(self, message, "DATA_DECODE_ERROR")
+    def __init__(self, message, error_sub_type, **extras):
+        JsonWebError.__init__(self, message, "DATA_DECODE_ERROR", error_sub_type, **extras)
 
 class ObjectAttributeError(ObjectDecodeError):
-    def __init__(self, obj, attr):
+    def __init__(self, obj_type, attr):
         ObjectDecodeError.__init__(self, 
-            "Missing %s attribute for %s." % (attr, obj.__class__.__name__), 
-            sub_type="MISSING_ATTRIBUTE",
-            obj=obj, 
-            attr=attr
+            "Missing %s attribute for %s." % (attr, obj_type), 
+            "MISSING_ATTRIBUTE",
+            obj_type=obj_type, 
+            attribute=attr
         )
 
 class ObjectNotFoundError(ObjectDecodeError):
     def __init__(self, obj):
         ObjectDecodeError.__init__(self, 
-            "Cannot decode object %s. No such object." % obj, 
-            sub_error="OBJECT_NOT_FOUND",
-            obj=obj,
+            "Cannot decode object %s. No such object." % obj_type, 
+            "OBJECT_NOT_FOUND",
+            obj_type=obj_type,
         )
 
 def json_request(func):
@@ -125,7 +123,7 @@ class ObjectHook(object):
             
     def decode_obj(self, obj):
         """        
-        This method is called for every json obj decoded in a json string. The presense
+        This method is called for every dict decoded in a json string. The presense
         of the key ``__type__`` in ``obj`` will trigger a lookup in ``self.handlers``. If a handler is
         not found for ``__type__`` then an :exc:`ObjectNotFoundError` is raised. If a handler is found it will
         be called with ``obj`` as it only argument. If all goes well it should return a new
@@ -146,7 +144,7 @@ class ObjectHook(object):
             else:
                 return factory(cls, obj)
         except KeyError, e:
-            raise ObjectMissingAttributeError(obj_type, e.args[0])
+            raise ObjectAttributeError(obj_type, e.args[0])
         
     def _datetime(self, dt):
         if dt is None:
@@ -202,13 +200,13 @@ def from_object(handler=None, type_name=None, schema=None):
         >>> import json
         >>> from jsonweb.decode import from_object object_hook
         
-        >>> def person_handler(cls, obj):
+        >>> def person_decoder(cls, obj):
         ...    return cls(
         ...        obj["first_name"],
         ...        obj["last_name"]
         ...    )
         
-        >>> from_object(person_handler)        
+        >>> from_object(person_decoder)        
         ... class Person(object):
         ...     def __init__(self, first_name, last_name):
         ...         self.first_name
@@ -227,11 +225,20 @@ def from_object(handler=None, type_name=None, schema=None):
     will be the class's ``__name__`` attribute. You can specify your own value by setting
     the ``type_name`` keyword argument::
     
-        @from_object(person_handler, "PersonObject")
+        @from_object(person_decoder, "PersonObject")
         
     Which means the json string would need to be modified to look like this::
     
         '{"__type__": "PersonObject", "first_name": "Shawn", "last_name": "Adams"}'
+        
+    If a handler cannot be found for ``__type__`` an exception is raised ::
+    
+        >>> from josnweb.decode import ObjectNotFoundError
+        >>> try:
+        ...     luke = json.loads('{"__type__": "Jedi", "name": "Luke"}', object_hook=object_hook)
+        ... except ObjectNotFoundError, e:
+        ...     print e
+        Cannot decode object Jedi. No such object.
         
     You may have noticed that ``handler`` is optional. If you do not specify a ``handler`` 
     :mod:`jsonweb` will attempt to generate one. It will inspect your class's ``__init__``
@@ -279,7 +286,7 @@ def from_object(handler=None, type_name=None, schema=None):
         >>> person = json.loads(person_json, object_hook=object_hook)
         >>> print person.gender
         None
-        
+  
     You can specify a json validator for a class with the ``schema`` keyword agrument. See the 
     :mod:`jsonweb.schema` to learn how they are used.
     """

@@ -1,6 +1,6 @@
 :mod:`jsonweb.encode` -- encode your python classes
 ===================================================
-
+   
 .. automodule:: jsonweb.encode
 
 Decorators
