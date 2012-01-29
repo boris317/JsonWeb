@@ -150,7 +150,25 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         exc = context.exception
         
         self.assertEqual(exc.extras["attribute"], "last_name")
-        self.assertEqual(str(exc), "Missing last_name attribute for Person.")        
+        self.assertEqual(str(exc), "Missing last_name attribute for Person.")
+        
+    def test_decode_with_schema(self):
+        from jsonweb.schema import ObjectSchema, String
+        from jsonweb.decode import from_object, object_hook
+        
+        class PersonSchema(ObjectSchema):
+            first_name = String()
+            last_name = String()
+            
+        @from_object(schema=PersonSchema)
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+        
+        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'                
+        person = json.loads(json_str, object_hook=object_hook)
+        self.assertTrue(isinstance(person, Person))
                 
         
         

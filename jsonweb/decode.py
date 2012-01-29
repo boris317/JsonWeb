@@ -140,7 +140,7 @@ class ObjectHook(object):
         
         try:
             if schema:
-                return factory(cls, schema().to_obj(obj))
+                return factory(cls, schema().validate(obj))
             else:
                 return factory(cls, obj)
         except KeyError, e:
