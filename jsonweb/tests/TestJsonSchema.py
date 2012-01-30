@@ -110,6 +110,8 @@ class TestJsonSchema(unittest.TestCase):
         exc = context.exception
         self.assertTrue("job" in exc.errors)
         self.assertEqual(len(exc.errors["job"].errors), 2)
+        self.assertEqual(exc.errors["job"].errors["id"].message, "Missing required parameter.")
+        self.assertEqual(exc.errors["job"].errors["title"].message, "Missing required parameter.")        
         
     def test_list_schema_error(self):
         from jsonweb.schema import ObjectSchema, List, String, ValidationError        
@@ -124,7 +126,21 @@ class TestJsonSchema(unittest.TestCase):
         exc = context.exception
         self.assertEqual(exc.errors[0].error_index, 1)
         
+    def test_ensuretype_raises_validation_error(self):
+        from jsonweb.schema import ObjectSchema, EnsureType, String, ValidationError
         
+        class Foo(object):
+            pass
+        
+        class JobSchema(ObjectSchema):
+            title = String()
+            id = EnsureType(Foo)  
+                    
+        with self.assertRaises(ValidationError) as context:
+            self.assertEqual(JobSchema().validate({"title": "jedi", "id": 1}), obj)
+            
+        exc = context.exception
+        self.assertEqual(exc.errors["id"].message, "Expected Foo got int instead.")
         
             
         

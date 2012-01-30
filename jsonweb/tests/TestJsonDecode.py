@@ -1,8 +1,29 @@
 import json
 import unittest
 
-class TestJsonDecode(unittest.TestCase):
-    def test_decode_decorator(self):
+
+class TestJsonWebObjectDecoder(unittest.TestCase):
+    def setUp(self):
+        from jsonweb.decode import decode
+        decode.handlers = {}
+        
+    def test_decodes_to_class_instance(self):
+        from jsonweb.decode import from_object, object_hook
+                
+        @from_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+                                
+        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
+        person = json.loads(json_str, object_hook=object_hook)
+        
+        self.assertTrue(isinstance(person, Person))        
+        self.assertEqual(person.first_name, "shawn")
+        self.assertEqual(person.last_name, "adams")  
+        
+    def test_supplied_handler_decodes_to_class_instance(self):
         from jsonweb.decode import from_object, object_hook
         
         def person_handler(cls, obj):
@@ -21,25 +42,7 @@ class TestJsonDecode(unittest.TestCase):
         person = json.loads(json_str, object_hook=object_hook)
         
         self.assertTrue(isinstance(person, Person))
-                
-class TestJsonWebObjectDecoder(unittest.TestCase):
-    def test_decodes_to_class_instance(self):
-        from jsonweb.decode import from_object, object_hook
-                
-        @from_object()
-        class Person(object):
-            def __init__(self, first_name, last_name):
-                self.first_name = first_name
-                self.last_name = last_name
-                                
-        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
-        person = json.loads(json_str, object_hook=object_hook)
         
-        self.assertTrue(isinstance(person, Person))        
-        self.assertEqual(person.first_name, "shawn")
-        self.assertEqual(person.last_name, "adams")  
-        
-
     def test_class_kw_args_are_optional(self):
         from jsonweb.decode import from_object, object_hook        
         """
@@ -84,7 +87,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
     def test_bad__init__raises_error(self):
         from jsonweb.decode import from_object, object_hook, JsonWebError      
         """
-        Test that if a class has a no argument __init__ method or a *args and **kw only __init__
+        Test that if a class has a no argument __init__ method or a *args/**kw only __init__
         method a JsonWebError is raised.
         """
         with self.assertRaises(JsonWebError) as context:
@@ -150,25 +153,5 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         exc = context.exception
         
         self.assertEqual(exc.extras["attribute"], "last_name")
-        self.assertEqual(str(exc), "Missing last_name attribute for Person.")
-        
-    def test_decode_with_schema(self):
-        from jsonweb.schema import ObjectSchema, String
-        from jsonweb.decode import from_object, object_hook
-        
-        class PersonSchema(ObjectSchema):
-            first_name = String()
-            last_name = String()
-            
-        @from_object(schema=PersonSchema)
-        class Person(object):
-            def __init__(self, first_name, last_name):
-                self.first_name = first_name
-                self.last_name = last_name
-        
-        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'                
-        person = json.loads(json_str, object_hook=object_hook)
-        self.assertTrue(isinstance(person, Person))
+        self.assertEqual(str(exc), "Missing last_name attribute for Person.")        
                 
-        
-        

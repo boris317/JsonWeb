@@ -64,7 +64,7 @@ class ObjectAttributeError(ObjectDecodeError):
         )
 
 class ObjectNotFoundError(ObjectDecodeError):
-    def __init__(self, obj):
+    def __init__(self, obj_type):
         ObjectDecodeError.__init__(self, 
             "Cannot decode object %s. No such object." % obj_type, 
             "OBJECT_NOT_FOUND",
@@ -137,12 +137,11 @@ class ObjectHook(object):
             factory, cls, schema = self.handlers[obj_type]
         except KeyError:
             raise ObjectNotFoundError(obj_type)
-        
+                
+        if schema:
+            obj = schema().validate(obj)
         try:
-            if schema:
-                return factory(cls, schema().validate(obj))
-            else:
-                return factory(cls, obj)
+            return factory(cls, obj)
         except KeyError, e:
             raise ObjectAttributeError(obj_type, e.args[0])
         

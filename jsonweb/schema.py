@@ -1,7 +1,9 @@
+import inspect
 """
 
 """
 from jsonweb.exceptions import JsonWebError
+from jsonweb.decode import decode
 
 class ValidationError(JsonWebError):
     def __init__(self, message, errors=None):
@@ -36,10 +38,10 @@ Complex validators
 
 class SchemaMeta(type):
     def __new__(meta, class_name, bases, class_dict):
-        fields = {}
+        fields = []
         for k,v in class_dict.iteritems():
             if hasattr(v, "_validate"):
-                fields[k] = v
+                fields.append(k)
         class_dict["_fields"] = fields
         return type.__new__(meta, class_name, bases, class_dict)    
     
@@ -51,14 +53,15 @@ class ObjectSchema(Validator):
         errors = {}        
         if not isinstance(obj, dict):
             raise ValidationError("Expected dict got %s instead" % (self._type_name(obj)))
-        for k, v in self._fields.iteritems():
+        for field in self._fields:
+            v = getattr(self, field)
             try:
-                val_obj[k] = v.validate(obj[k])
+                val_obj[field] = v.validate(obj[field])
             except KeyError, e:
                 if v.is_required():
-                    errors[k] = ValidationError("Missing required parameter.")
+                    errors[field] = ValidationError("Missing required parameter.")
             except ValidationError, e:
-                    errors[k] = e
+                    errors[field] = e
         if errors:
             raise ValidationError("", errors)
         return val_obj
@@ -98,10 +101,26 @@ Simple Validators
             
 class EnsureType(Validator):
     def __init__(self, _type):
-        self._type
+        self._type = _type
+        
     def validate(self, item):
-        if not isinstance(item, _type):
-            raise ValidationError("Expected %s got %s instead." % (self.cls.__name__, self._type_name(item)))
+        if not isinstance(item, self._type):
+            raise ValidationError("Expected %s got %s instead." % (self._type.__name__, self._type_name(item)))
+        return item
+        
+    def __get__(self, obj, type=None):
+
+        if type is None:
+            return self
+        if not isinstance(self._type, basestring):
+            return self
+        #``_type`` can be a string. This way you can reference a class
+        #that may not be defined yet. But now we have to get the class
+        handler = decode.handlers.get(self._type)
+        if not handler:
+            raise JsonWebError("Cannot find class %s." % self._type)
+        return EnsureType(handler[1])
+        
         
 class String(Validator):
     def validate(self, item):
