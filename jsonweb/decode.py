@@ -120,14 +120,21 @@ class _ObjectHandlers(object):
     def add_handler(self, cls, handler, type_name=None, schema=None):
         self.__handlers[type_name or cls.__name__] = (handler, cls, schema)
         
-    def get(self, handler):
-        return self.__handlers.get(handler)
+    def get(self, name):
+        return self.__handlers.get(name)
+    
+    def set(self, name, handler):
+        self.__handlers[handler] = handler
     
     def clear(self):
         self.__handlers = {}
-        
+                        
     def __getitem__(self, handler):
         return self.__handlers[handler]
+    
+    def __iter__(self):
+        for name, handler_tuple in self.__handlers.iteritems():
+            yield name, handler_tuple
         
 class ObjectHook(object):
     """
@@ -337,15 +344,15 @@ def from_object(handler=None, type_name=None, schema=None):
 def object_hook(handlers=None):
     """
     Wrapper around :class:`ObjectHook`. Calling this function
-    will configure an instance :class:`ObjectHook` and return
+    will configure an instance of :class:`ObjectHook` and return
     a callable suitable for passing to :func:`json.loads` as ``object_hook``.
     
-    ``handlers`` is a list of tuples with the following format::
+    ``handlers`` is a dict with this format::
     
-        (type_name, class, handler, schema)
+        {"Person": (Person, person_decoder, PersonSchema)} #{type_name: (class, handler, schema)}
         
     If you do not wish to decorate your classes with :func:`from_object` you can specify the same
-    info in via the ``handlers`` keyword argument. Here is an exmaple::
+    parameters via the ``handlers`` keyword argument. Here is an exmaple::
         
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -355,13 +362,41 @@ def object_hook(handlers=None):
         def person_decoder(cls, obj):
             return cls(obj["first_name"], obj["last_name"])
             
-        handlers = [("Person", Person, person_decoder, None)]
+        handlers = {"Person": (Person, person_decoder, None)}
         person = json.loads(json_str, object_hook=object_hook(handlers))
         
-    will override any values that were specified via the :func:`from_object` decorator on said class.
-    This is mostly useful if you want
+    .. note:: 
     
+        If you decorate a class with :func:`from_object` you can override the ``handler`` and ``schema`` values
+        later. Here is an example of overriding a schema you defined with :func:`from_object` (some code is
+        left out for brevity)::
+        
+            @from_object(schema=PersonSchema)
+            class Person(object):
+                ...
+                
+            #and later on in the code...
+            handlers = {"Person": (None, None, NewPersonSchema)}
+            person = json.loads(json_str, object_hook=object_hook(handlers))
+            
+        ``None`` values are simply ignored. It wont replace any values with ``None``. This will only override 
+        ``schema`` for that one call to :func:`json.loads`. If you'd like to build an object hook handler for
+        use in many different calls you can do this::
+        
+            ...
+            my_obj_hook = object_hook(handlers)
+            #later on ...
+            person = json.loads(json_str, object_hook=my_obj_hook)
+            #and even later on ...
+            another_person = json.loads(json_str, object_hook=my_obj_hook)
+            
+                                
     """
+    if handlers:
+        h = _ObjectHandlers()
+        for name, handler in _object_handlers:
+            if name in handler:
+                pass
     decode = ObjectHook(_object_handlers)
     def handler(obj):
         return decode.decode_obj(obj)
