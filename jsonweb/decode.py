@@ -34,6 +34,7 @@ at the :func:`from_object` decorator for a detailed explanation.
 
 import inspect
 import json
+import copy
 from datetime import datetime
 from jsonweb.exceptions import JsonWebError
 
@@ -109,17 +110,34 @@ class JsonWebObjectHandler(object):
         if self.kw_args:
             for key, default in self.kw_args:
                 cls_kw_args[key] = obj.get(key, default)
-                
+        print cls        
         return cls(*cls_args, **cls_kw_args)
-            
+    
+class _ObjectHandlers(object):
+    def __init__(self):
+        self.__handlers = {}
+        
+    def add_handler(self, cls, handler, type_name=None, schema=None):
+        self.__handlers[type_name or cls.__name__] = (handler, cls, schema)
+        
+    def get(self, handler):
+        return self.__handlers.get(handler)
+    
+    def clear(self):
+        self.__handlers = {}
+        
+    def __getitem__(self, handler):
+        return self.__handlers[handler]
+        
 class ObjectHook(object):
     """
-    Class responsible for decoding json objects to python classes. 
+    This class responsible for decoding json objects to python classes. You should not need to 
+    use this class directly. :func:`object_hook` is responsable for instiating and using it.
     """
     _DT_FORMAT = _DATETIME_FORMAT
             
-    def __init__(self):
-        self.handlers = {}        
+    def __init__(self, handlers):
+        self.handlers = handlers      
             
     def decode_obj(self, obj):
         """        
@@ -155,9 +173,6 @@ class ObjectHook(object):
         except ValueError, e:
             raise ObjectDecodeError(e.args[0])
         
-    def add_handler(self, cls, handler, type_name=None, schema=None):
-        self.handlers[type_name or cls.__name__] = (handler, cls, schema)
-
 def get_arg_spec(func):
     arg_spec = inspect.getargspec(func)
     args = arg_spec.args
@@ -185,8 +200,8 @@ def get_jsonweb_handler(cls):
     args, kw = get_arg_spec(cls.__init__)
 
     return JsonWebObjectHandler(args, kw or None)
-    
-decode = ObjectHook()
+
+_object_handlers = _ObjectHandlers()
 
 def from_object(handler=None, type_name=None, schema=None):
     """
@@ -286,19 +301,68 @@ def from_object(handler=None, type_name=None, schema=None):
         >>> print person.gender
         None
   
-    You can specify a json validator for a class with the ``schema`` keyword agrument. See the 
-    :mod:`jsonweb.schema` to learn how they are used.
+    You can specify a json validator for a class with the ``schema`` keyword agrument. 
+    Here is a quick example::
+    
+        >>> from jsonweb.schema import ObjectSchema, ValidationError
+        >>> class PersonSchema(ObjectSchema):
+        ...    first_name = String()
+        ...    last_name = String()
+        ...    gender = String(required=False)
+        
+        >>> @from_object(schema=PersonSchema)
+        ... class Person(object):
+        ...     def __init__(self, first_name, last_name, gender=None):
+        ...         self.first_name = first_name
+        ...         self.last_name = last_name
+        ...         self.gender = gender
+        
+        >>> person_json = '{"__type__": "Person", "first_name": 12345, "last_name": "Adams"}'
+        >>> try:
+        ...     person = json.loads(person_json, object_hook=object_hook)
+        ... except ValidationError, e:
+        ...     print e.errors["first_name"].message
+        Expected str got int instead.
+    
+    Schemas are useful for validating user supplied json in webservices or other web applications.
+    For a detailed explination on using schemas see the :mod:`jsonweb.schema`.
     """
     def wrapper(cls):
-        obj_handler = handler or get_jsonweb_handler(cls)
-        decode.add_handler(cls, obj_handler, type_name, schema)
+        _object_handlers.add_handler(
+            cls, handler or get_jsonweb_handler(cls), type_name, schema
+        )
         return cls
     return wrapper
 
-def object_hook(obj):
+def object_hook(handlers=None):
     """
-    Very thin wrapper aound the module level instance of :class:`ObjectHook`. This is
-    the callable you will pass into :func:`json.loads` for the keywoard argument
-    ``object_hook``. 
+    Wrapper around :class:`ObjectHook`. Calling this function
+    will configure an instance :class:`ObjectHook` and return
+    a callable suitable for passing to :func:`json.loads` as ``object_hook``.
+    
+    ``handlers`` is a list of tuples with the following format::
+    
+        (type_name, class, handler, schema)
+        
+    If you do not wish to decorate your classes with :func:`from_object` you can specify the same
+    info in via the ``handlers`` keyword argument. Here is an exmaple::
+        
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        def person_decoder(cls, obj):
+            return cls(obj["first_name"], obj["last_name"])
+            
+        handlers = [("Person", Person, person_decoder, None)]
+        person = json.loads(json_str, object_hook=object_hook(handlers))
+        
+    will override any values that were specified via the :func:`from_object` decorator on said class.
+    This is mostly useful if you want
+    
     """
-    return decode.decode_obj(obj)
+    decode = ObjectHook(_object_handlers)
+    def handler(obj):
+        return decode.decode_obj(obj)
+    return handler

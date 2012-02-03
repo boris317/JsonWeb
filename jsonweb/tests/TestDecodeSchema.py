@@ -3,8 +3,9 @@ import unittest
 
 class TestDecodeSchema(unittest.TestCase):
     def setUp(self):
-        from jsonweb.decode import decode
-        decode.handlers = {}
+        from jsonweb.decode import _object_handlers
+        _object_handlers.clear()
+        print "clearing handlers"
         
     def test_decode_with_schema(self):
         from jsonweb.schema import ObjectSchema, String
@@ -21,7 +22,7 @@ class TestDecodeSchema(unittest.TestCase):
                 self.last_name = last_name
         
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'                
-        person = json.loads(json_str, object_hook=object_hook)
+        person = json.loads(json_str, object_hook=object_hook())
         self.assertTrue(isinstance(person, Person))
 
     def test_decode_with_schema_raises_error(self):
@@ -45,7 +46,7 @@ class TestDecodeSchema(unittest.TestCase):
         
         json_str = '{"__type__": "Person", "first_name": 123, "last_name": "adams"}'
         with self.assertRaises(ValidationError) as context:
-            person = json.loads(json_str, object_hook=object_hook)
+            person = json.loads(json_str, object_hook=object_hook())
             
         exc = context.exception
         self.assertEqual(exc.errors["first_name"].message, "Expected string got int instead.")
@@ -93,7 +94,7 @@ class TestDecodeSchema(unittest.TestCase):
                 "id": 1
         }}
                 
-        person = json.loads(json.dumps(obj), object_hook=object_hook)
+        person = json.loads(json.dumps(obj), object_hook=object_hook())
         self.assertTrue(isinstance(person, Person))
         self.assertTrue(isinstance(person.job, Job))    
         
@@ -143,7 +144,7 @@ class TestDecodeSchema(unittest.TestCase):
         }}
         
         with self.assertRaises(JsonWebError) as context:
-            person = json.loads(json.dumps(obj), object_hook=object_hook)
+            person = json.loads(json.dumps(obj), object_hook=object_hook())
             
         exc = context.exception
         self.assertEqual(str(exc), "Cannot find class Job.")
@@ -174,7 +175,7 @@ class TestDecodeSchema(unittest.TestCase):
             "persons": [{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}]*2
         }
         
-        request_obj = json.loads(json.dumps(obj), object_hook=object_hook)
+        request_obj = json.loads(json.dumps(obj), object_hook=object_hook())
         self.assertEqual(len(request_obj["persons"]), 2)
         self.assertTrue(isinstance(request_obj["persons"][0], Person))
                     

@@ -4,8 +4,8 @@ import unittest
 
 class TestJsonWebObjectDecoder(unittest.TestCase):
     def setUp(self):
-        from jsonweb.decode import decode
-        decode.handlers = {}
+        from jsonweb.decode import _object_handlers
+        _object_handlers.clear()
         
     def test_decodes_to_class_instance(self):
         from jsonweb.decode import from_object, object_hook
@@ -17,7 +17,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
                 self.last_name = last_name
                                 
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
-        person = json.loads(json_str, object_hook=object_hook)
+        person = json.loads(json_str, object_hook=object_hook())
         
         self.assertTrue(isinstance(person, Person))        
         self.assertEqual(person.first_name, "shawn")
@@ -39,7 +39,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
                 self.last_name = last_name
                 
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
-        person = json.loads(json_str, object_hook=object_hook)
+        person = json.loads(json_str, object_hook=object_hook())
         
         self.assertTrue(isinstance(person, Person))
         
@@ -57,7 +57,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
                 self.job = job
                                 
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
-        person = json.loads(json_str, object_hook=object_hook)
+        person = json.loads(json_str, object_hook=object_hook())
         
         self.assertTrue(isinstance(person, Person))        
         self.assertEqual(person.first_name, "shawn")
@@ -65,7 +65,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         self.assertEqual(person.job, None)
         
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams", "job": "Jedi Knight"}'
-        person = json.loads(json_str, object_hook=object_hook)
+        person = json.loads(json_str, object_hook=object_hook())
         self.assertEqual(person.job, "Jedi Knight")
         
     def test_ignores_extra_keys_in_json(self):
@@ -78,7 +78,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
                 self.last_name = last_name
                                 
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams", "no_such_key": "hello"}'
-        person = json.loads(json_str, object_hook=object_hook)
+        person = json.loads(json_str, object_hook=object_hook())
         
         self.assertTrue(isinstance(person, Person))        
         self.assertEqual(person.first_name, "shawn")
@@ -124,7 +124,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
                 
         json_str = '{"__type__": "Person", "first_name": "shawn"}'
         with self.assertRaises(ObjectAttributeError) as context:
-            person = json.loads(json_str, object_hook=object_hook)
+            person = json.loads(json_str, object_hook=object_hook())
             
         exc = context.exception
         
@@ -148,7 +148,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
                 
         json_str = '{"__type__": "Person", "first_name": "shawn"}'
         with self.assertRaises(ObjectAttributeError) as context:
-            person = json.loads(json_str, object_hook=object_hook)
+            person = json.loads(json_str, object_hook=object_hook())
             
         exc = context.exception
         

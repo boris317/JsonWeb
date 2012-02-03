@@ -3,7 +3,7 @@ import inspect
 
 """
 from jsonweb.exceptions import JsonWebError
-from jsonweb.decode import decode
+from jsonweb.decode import _object_handlers
 
 class ValidationError(JsonWebError):
     def __init__(self, message, errors=None):
@@ -63,7 +63,7 @@ class ObjectSchema(Validator):
             except ValidationError, e:
                     errors[field] = e
         if errors:
-            raise ValidationError("", errors)
+            raise ValidationError("Error validating object", errors)
         return val_obj
     
     def _prop_str(self, k=None):
@@ -90,7 +90,7 @@ class List(Validator):
                 e.error_index = i
                 errors.append(e)
         if errors:
-            raise ValidationError("", errors=errors)
+            raise ValidationError("Error validating list.", errors=errors)
         return validated_objs
 
     
@@ -116,7 +116,8 @@ class EnsureType(Validator):
             return self
         #``_type`` can be a string. This way you can reference a class
         #that may not be defined yet. But now we have to get the class
-        handler = decode.handlers.get(self._type)
+        handler = _object_handlers.get(self._type)
+        print handler
         if not handler:
             raise JsonWebError("Cannot find class %s." % self._type)
         return EnsureType(handler[1])

@@ -22,7 +22,8 @@ setup(name='JsonWeb',
       ],
       setup_requires=[
           'nose>=1.0',
-          'pastescript'
+          'pastescript',
+          'coverage'
       ],
       entry_points="""
       # -*- Entry points: -*-

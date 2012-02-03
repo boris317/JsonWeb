@@ -81,7 +81,7 @@ class TestJsonEnecode(unittest.TestCase):
         person = Person("shawn", "adams")
         json_str = json.dumps(person, cls=JsonWebEncoder)
         del person
-        person = json.loads(json_str, object_hook=object_hook)
+        person = json.loads(json_str, object_hook=object_hook())
         self.assertTrue(isinstance(person, Person))
                  
         

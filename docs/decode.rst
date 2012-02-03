@@ -7,3 +7,9 @@ Decorators
 ----------
 
 .. autofunction:: from_object
+
+Object hook
+-----------
+.. autofunction:: object_hook
+.. autoclass:: ObjectHook
+   :members: decode_obj
