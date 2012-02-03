@@ -138,8 +138,9 @@ class _ObjectHandlers(object):
         
 class ObjectHook(object):
     """
-    This class responsible for decoding json objects to python classes. You should not need to 
-    use this class directly. :func:`object_hook` is responsable for instiating and using it.
+    This class does most of the work in managing the handlers that decode the json into python
+    class instances. You should not need to  use this class directly. :func:`object_hook` is responsible
+    for instiating and using it.
     """
     _DT_FORMAT = _DATETIME_FORMAT
             
