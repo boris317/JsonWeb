@@ -1,0 +1,1 @@
+from jsonweb.schema.base import ObjectSchema, ValidationError

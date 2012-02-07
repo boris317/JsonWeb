@@ -1,9 +1,9 @@
 import unittest
 
-
 class TestJsonSchema(unittest.TestCase):
     def test_non_nested_obj_schema(self):
-        from jsonweb.schema import ObjectSchema, String, Float, Integer
+        from jsonweb.schema import ObjectSchema, ValidationError
+        from jsonweb.schema.validators import String, Float, Integer
         
         class PersonSchema(ObjectSchema):
             first_name = String()
@@ -15,7 +15,8 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(PersonSchema().validate(obj), obj)
         
     def test_nested_schema(self):
-        from jsonweb.schema import ObjectSchema, String, Float, Integer
+        from jsonweb.schema import ObjectSchema
+        from jsonweb.schema.validators import String, Float, Integer        
         
         class JobSchema(ObjectSchema):
             title = String()
@@ -41,7 +42,8 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(PersonSchema().validate(obj), obj)
         
     def test_raises_validation_error(self):
-        from jsonweb.schema import ObjectSchema, String, Integer, Float, ValidationError
+        from jsonweb.schema import ObjectSchema, ValidationError
+        from jsonweb.schema.validators import String, Float, Integer
                     
         class PersonSchema(ObjectSchema):
             first_name = String()
@@ -81,7 +83,8 @@ class TestJsonSchema(unittest.TestCase):
         """
         Test a nested schema raises a compound (nested) ValidationError.
         """
-        from jsonweb.schema import ObjectSchema, String, Float, Integer, ValidationError
+        from jsonweb.schema import ObjectSchema, ValidationError
+        from jsonweb.schema.validators import String, Float, Integer
         
         class JobSchema(ObjectSchema):
             title = String()
@@ -114,7 +117,9 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(exc.errors["job"].errors["title"].message, "Missing required parameter.")        
         
     def test_list_schema_error(self):
-        from jsonweb.schema import ObjectSchema, List, String, ValidationError        
+        from jsonweb.schema import ObjectSchema, ValidationError
+        from jsonweb.schema.validators import List, String
+        
         class PersonSchema(ObjectSchema):
             first_name = String()
             last_name = String()
@@ -127,7 +132,8 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(exc.errors[0].error_index, 1)
         
     def test_ensuretype_raises_validation_error(self):
-        from jsonweb.schema import ObjectSchema, EnsureType, String, ValidationError
+        from jsonweb.schema import ObjectSchema, ValidationError
+        from jsonweb.schema.validators import EnsureType, String
         
         class Foo(object):
             pass
@@ -141,7 +147,4 @@ class TestJsonSchema(unittest.TestCase):
             
         exc = context.exception
         self.assertEqual(exc.errors["id"].message, "Expected Foo got int instead.")
-        
-            
-        
             
