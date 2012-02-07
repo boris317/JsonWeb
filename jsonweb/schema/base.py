@@ -6,8 +6,8 @@ class ValidationError(JsonWebError):
         self.errors = errors
         
 class BaseValidator(object):
-    def __init__(self, required=True, nullable=False):
-        self.__required = required
+    def __init__(self, optional=False, nullable=False):
+        self.__required = (not optional)
         self.__nullable = nullable
         
     def is_required(self):

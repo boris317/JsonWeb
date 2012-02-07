@@ -53,7 +53,7 @@ class TestDecodeSchema(unittest.TestCase):
             person = json.loads(json_str, object_hook=object_hook())
             
         exc = context.exception
-        self.assertEqual(exc.errors["first_name"].message, "Expected string got int instead.")
+        self.assertEqual(exc.errors["first_name"].message, "Expected str got int instead.")
         
     def test_class_name_as_string_to_ensuretype(self):
         """

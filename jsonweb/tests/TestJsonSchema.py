@@ -76,7 +76,7 @@ class TestJsonSchema(unittest.TestCase):
         self.assertTrue("first_name" in exc.errors)
         self.assertTrue("test" in exc.errors)
         
-        self.assertEqual(exc.errors["first_name"].message, "Expected string got int instead.")
+        self.assertEqual(exc.errors["first_name"].message, "Expected str got int instead.")
         self.assertEqual(exc.errors["test"].message, "Expected float got str instead.")
         
     def test_compound_error(self):
@@ -147,4 +147,101 @@ class TestJsonSchema(unittest.TestCase):
             
         exc = context.exception
         self.assertEqual(exc.errors["id"].message, "Expected Foo got int instead.")
+        
+    def test_attributes_can_be_optional(self):
+        from jsonweb.schema import ObjectSchema, ValidationError
+        from jsonweb.schema.validators import EnsureType, String
+        
+        class PersonSchema(ObjectSchema):
+            first_name = String()
+            last_name = String(optional=True)
             
+        person = {"first_name": "shawn"}
+        self.assertEqual(PersonSchema().validate(person), person)
+
+class TestEachValidator(unittest.TestCase):
+    def test_string_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import String
+        
+        v = String()
+        self.assertEqual(v.validate("foo"), "foo")
+        with self.assertRaises(ValidationError) as context:
+            v.validate(1)
+            
+        exception = context.exception
+        self.assertEqual("Expected str got int instead.", str(exception))
+        
+    def test_integer_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import Integer
+        
+        v = Integer()
+        self.assertEqual(v.validate(42), 42)
+        with self.assertRaises(ValidationError) as context:
+            v.validate("foo")
+            
+        exception = context.exception
+        self.assertEqual("Expected int got str instead.", str(exception))
+        
+    def test_float_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import Float
+        
+        v = Float()
+        self.assertEqual(v.validate(42.0), 42.0)
+        with self.assertRaises(ValidationError) as context:
+            v.validate(42)
+            
+        exception = context.exception
+        self.assertEqual("Expected float got int instead.", str(exception))
+        
+    def test_number_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import Number
+        
+        v = Number()
+        self.assertEqual(v.validate(42.0), 42.0)
+        self.assertEqual(v.validate(42), 42)
+        with self.assertRaises(ValidationError) as context:
+            v.validate("foo")
+            
+        exception = context.exception
+        self.assertEqual("Expected number got str instead.", str(exception))
+        
+    def test_list_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import Number, List
+        
+        v = List(Number)
+        self.assertEqual(v.validate([1,2,3]), [1,2,3])
+        
+        with self.assertRaises(ValidationError) as context:
+            v.validate("foo")
+            
+        exception = context.exception
+        self.assertEqual("Expected list got str instead.", str(exception))
+        
+        with self.assertRaises(ValidationError) as context:
+            v.validate(["foo"])
+            
+        exception = context.exception
+        self.assertEqual("Error validating list.", str(exception))
+        self.assertEqual(len(exception.errors), 1)
+        self.assertEqual(exception.errors[0].error_index, 0)
+        self.assertEqual(str(exception.errors[0]), "Expected number got str instead.")  
+        
+    def test_ensuretype_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import EnsureType
+        
+        v = EnsureType((int, float))
+        self.assertEqual(v.validate(42.0), 42.0)
+        self.assertEqual(v.validate(42), 42)
+        
+        with self.assertRaises(ValidationError) as context:
+            v.validate("foo")
+            
+        exception = context.exception
+        self.assertEqual("Expected one of (int, float) got str instead.", str(exception))
+        

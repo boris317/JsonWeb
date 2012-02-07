@@ -6,11 +6,14 @@ from jsonweb.exceptions import JsonWebError
 class List(BaseValidator):
     def __init__(self, validator, **kw):
         super(List, self).__init__(**kw)
-        self.validator = validator
+        if type(validator) is type:
+            self.validator = validator()
+        else:
+            self.validator = validator
         
     def validate(self, item):
         if not isinstance(item, list):
-            raise ValidationError("Expected list got %s instead" % self._class_name(item))
+            raise ValidationError("Expected list got %s instead." % self._class_name(item))
         validated_objs = []
         errors = []
 
@@ -43,7 +46,7 @@ class EnsureType(BaseValidator):
     
     def __type_name(self, _type):
         if isinstance(_type, tuple):
-            return "(%s)" % ", ".join((t.__name__ for t in _type))
+            return "one of (%s)" % ", ".join((t.__name__ for t in _type))
         return _type.__name__
     
     def __get__(self, obj, type=None):
@@ -62,7 +65,7 @@ class EnsureType(BaseValidator):
         
 class String(EnsureType):
     def __init__(self, **kw):
-        super(String, self).__init__(basestring, type_name="string", **kw)
+        super(String, self).__init__(basestring, type_name="str", **kw)
 
 class Integer(EnsureType):
     def __init__(self, **kw):
