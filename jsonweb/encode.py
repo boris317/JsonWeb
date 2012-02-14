@@ -67,23 +67,22 @@ def to_object(cls_type=None, suppress=[], handler=None):
         >>> json.dumps(person, cls=JsonWebEncoder)        
         '{"__type__": "PersonObject", "first_name": "Shawn", "last_name": "Adams"}'
                   
-    If you would like to leave certian attributes out of the resultant json object you specify them 
-    with the ``suppress`` kw argument::
-        
-        >>> @to_object(suppress=["guid"])
+    If you would like to leave some attributes out of the resulting json simply
+    use the ``suppress`` kw argument to pass a list of attribute names::
+           
+        >>> @to_object(suppress=["last_name"])
         ... class Person(object):
         ...     def __init__(self, first_name, last_name):
-        ...         self.guid = 12334
         ...         self.first_name = first_name
         ...         self.last_name = last_name
         
         >>> person = Person("Shawn", "Adams")
         >>> json.dumps(person, cls=JsonWebEncoder)
-        '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'        
+        '{"__type__": "Person", "first_name": "Shawn"}'        
                 
     You can even suppress the ``__type__`` attribute ::
     
-        @to_object(suppress=["guid", "__type__"])
+        @to_object(suppress=["last_name", "__type__"])
         ...
                           
     If you need greater control over how your object is encoded you can specify a ``handler`` callable.
