@@ -3,8 +3,8 @@ import unittest
 
 class TestDecodeSchema(unittest.TestCase):
     def setUp(self):
-        from jsonweb.decode import _object_handlers
-        _object_handlers.clear()
+        from jsonweb.decode import _default_object_handlers
+        _default_object_handlers.clear()
         print "clearing handlers"
         
     def test_decode_with_schema(self):

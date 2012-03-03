@@ -1,5 +1,5 @@
 from jsonweb.schema.base import BaseValidator, ValidationError
-from jsonweb.decode import _object_handlers
+from jsonweb.decode import _default_object_handlers
 
 from jsonweb.exceptions import JsonWebError
 
@@ -56,7 +56,7 @@ class EnsureType(BaseValidator):
         if not isinstance(self.__type, basestring):
             return self
         #``_type`` was a string and now we must get the actual class
-        handler = _object_handlers.get(self.__type)
+        handler = _default_object_handlers.get(self.__type)
 
         if not handler:
             raise JsonWebError("Cannot find class %s." % self.__type)

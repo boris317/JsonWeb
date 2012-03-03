@@ -4,8 +4,8 @@ import unittest
 
 class TestJsonWebObjectDecoder(unittest.TestCase):
     def setUp(self):
-        from jsonweb.decode import _object_handlers
-        _object_handlers.clear()
+        from jsonweb.decode import _default_object_handlers
+        _default_object_handlers.clear()
         
     def test_decodes_to_class_instance(self):
         from jsonweb.decode import from_object, object_hook
@@ -153,5 +153,56 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         exc = context.exception
         
         self.assertEqual(exc.extras["attribute"], "last_name")
-        self.assertEqual(str(exc), "Missing last_name attribute for Person.")        
+        self.assertEqual(str(exc), "Missing last_name attribute for Person.")
+        
+    def test_supplied_handler_dict_to_object_hook(self):
+        """
+        Test that we can pass a ``handlers`` dict to decode.object_hook.
+        """
+        from jsonweb.decode import object_hook
+        
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
                 
+        def person_decoder(cls, obj):
+            return cls(obj["first_name"], obj["last_name"])
+                    
+        handlers = {"Person": {"cls": Person, "handler": person_decoder}}
+        
+        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'    
+        person = json.loads(json_str, object_hook=object_hook(handlers))
+        self.assertTrue(isinstance(person, Person))        
+        self.assertEqual(person.first_name, "shawn")
+        self.assertEqual(person.last_name, "adams")
+        
+    def test_supplied_handler_dict_overrides_from_object(self):
+        """
+        Test that a class decorated with from_object can have its
+        handler and schema overriden with a supplied dict to
+        decode.object_hook
+        """
+        from jsonweb.decode import object_hook, from_object
+        
+        @from_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        did_run = []
+        def person_decoder(cls, obj):
+            did_run.append(True)
+            return cls(obj["first_name"], obj["last_name"])
+        
+        
+        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'    
+        person = json.loads(json_str, object_hook=object_hook())
+        self.assertTrue(isinstance(person, Person))
+        
+        handlers = {"Person": {"handler": person_decoder}}        
+        person = json.loads(json_str, object_hook=object_hook(handlers))
+        self.assertTrue(isinstance(person, Person))
+        self.assertTrue(did_run)
+    

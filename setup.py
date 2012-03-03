@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.2'
+version = '0.333'
 
 setup(name='JsonWeb',
       version=version,

@@ -110,7 +110,7 @@ class JsonWebObjectHandler(object):
         if self.kw_args:
             for key, default in self.kw_args:
                 cls_kw_args[key] = obj.get(key, default)
-        print cls        
+        
         return cls(*cls_args, **cls_kw_args)
     
 class _ObjectHandlers(object):
@@ -121,14 +121,39 @@ class _ObjectHandlers(object):
         self.__handlers[type_name or cls.__name__] = (handler, cls, schema)
         
     def get(self, name):
+        """
+        Get a hanlder tuple. Return None if
+        no such handler.
+        """
         return self.__handlers.get(name)
     
-    def set(self, name, handler):
-        self.__handlers[handler] = handler
+    def set(self, name, handler_tuple):
+        """
+        Add a hanlder tuple (handler, cls, schema)
+        """
+        print name, handler_tuple
+        self.__handlers[name] = handler_tuple
     
     def clear(self):
         self.__handlers = {}
-                        
+        
+    def update_handler(self, name, cls=None, handler=None, schema=None):
+        # @@ Catch key errors?
+        handler_tuple = self[name]
+        self.set(name, tuple([
+            handler or handler_tuple[0],
+            cls or handler_tuple[1],
+            schema or handler_tuple[2]            
+        ]))
+        
+    def copy(self):
+        handler_copy = _ObjectHandlers()
+        [handler_copy.set(n,t) for n,t in self]
+        return handler_copy
+    
+    def __contains__(self, handler_name):
+        return handler_name in self.__handlers
+    
     def __getitem__(self, handler):
         return self.__handlers[handler]
     
@@ -209,7 +234,7 @@ def get_jsonweb_handler(cls):
 
     return JsonWebObjectHandler(args, kw or None)
 
-_object_handlers = _ObjectHandlers()
+_default_object_handlers = _ObjectHandlers()
 
 def from_object(handler=None, type_name=None, schema=None):
     """
@@ -337,7 +362,7 @@ def from_object(handler=None, type_name=None, schema=None):
     For a detailed explination on using schemas see the :mod:`jsonweb.schema`.
     """
     def wrapper(cls):
-        _object_handlers.add_handler(
+        _default_object_handlers.add_handler(
             cls, handler or get_jsonweb_handler(cls), type_name, schema
         )
         return cls
@@ -351,7 +376,7 @@ def object_hook(handlers=None):
     
     ``handlers`` is a dict with this format::
     
-        {"Person": (Person, person_decoder, PersonSchema)} #{type_name: (class, handler, schema)}
+        {"Person": {"cls": Person, "handler": person_decoder, "schema": PersonSchema)}
         
     If you do not wish to decorate your classes with :func:`from_object` you can specify the same
     parameters via the ``handlers`` keyword argument. Here is an exmaple::
@@ -364,7 +389,7 @@ def object_hook(handlers=None):
         def person_decoder(cls, obj):
             return cls(obj["first_name"], obj["last_name"])
             
-        handlers = {"Person": (Person, person_decoder, None)}
+        handlers = {"Person": {"cls": Person, "handler": person_decoder}}
         person = json.loads(json_str, object_hook=object_hook(handlers))
         
     .. note:: 
@@ -378,27 +403,32 @@ def object_hook(handlers=None):
                 ...
                 
             #and later on in the code...
-            handlers = {"Person": (None, None, NewPersonSchema)}
+            handlers = {"Person": {"schema": NewPersonSchema}}
             person = json.loads(json_str, object_hook=object_hook(handlers))
             
-        ``None`` values are simply ignored. It wont replace any values with ``None``. This will only override 
-        ``schema`` for that one call to :func:`json.loads`. If you'd like to build an object hook handler for
-        use in many different calls you can do this::
+        This will only override ``schema`` for that one call to :func:`json.loads`. If you'd like 
+        to build an object hook handler for use in many different calls you can do this::
         
             ...
             my_obj_hook = object_hook(handlers)
             #later on ...
             person = json.loads(json_str, object_hook=my_obj_hook)
             #and even later on ...
-            another_person = json.loads(json_str, object_hook=my_obj_hook)
-            
-                                
+            another_person = json.loads(json_str, object_hook=my_obj_hook)                                
     """
     if handlers:
-        h = _ObjectHandlers()
-        for name, handler in _object_handlers:
-            if name in handler:
-                pass
+        _object_handlers = _default_object_handlers.copy()
+        for name, handler_dict in handlers.iteritems():
+            if name in _object_handlers:
+                _object_handlers.update_handler(name, **handler_dict)
+            else:
+                _object_handlers.add_handler(
+                    handler_dict.pop('cls'),
+                    **handler_dict
+                )
+    else:
+        _object_handlers = _default_object_handlers
+               
     decode = ObjectHook(_object_handlers)
     def handler(obj):
         return decode.decode_obj(obj)
