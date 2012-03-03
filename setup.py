@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1'
+version = '0.2'
 
 setup(name='JsonWeb',
       version=version,
@@ -19,11 +19,6 @@ setup(name='JsonWeb',
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
-      ],
-      setup_requires=[
-          'nose>=1.0',
-          'pastescript',
-          'coverage'
       ],
       entry_points="""
       # -*- Entry points: -*-

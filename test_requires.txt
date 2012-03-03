@@ -1,0 +1,4 @@
+#The following packages are required for testing
+nose
+webtest
+coverage
