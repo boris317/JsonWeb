@@ -317,7 +317,7 @@ def from_object(handler=None, type_name=None, schema=None):
         >>> class PersonSchema(ObjectSchema):
         ...    first_name = String()
         ...    last_name = String()
-        ...    gender = String(required=False)
+        ...    gender = String(optional=True)
         
         >>> @from_object(schema=PersonSchema)
         ... class Person(object):
