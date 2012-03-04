@@ -252,7 +252,7 @@ def from_object(handler=None, type_name=None, schema=None):
         ...        obj["last_name"]
         ...    )
         
-        >>> from_object(person_decoder)        
+        >>> @from_object(person_decoder)        
         ... class Person(object):
         ...     def __init__(self, first_name, last_name):
         ...         self.first_name
@@ -280,11 +280,10 @@ def from_object(handler=None, type_name=None, schema=None):
     If a handler cannot be found for ``__type__`` an exception is raised ::
     
         >>> from josnweb.decode import ObjectNotFoundError
-        >>> try:
-        ...     luke = loader('{"__type__": "Jedi", "name": "Luke"}')
-        ... except ObjectNotFoundError, e:
-        ...     print e
-        Cannot decode object Jedi. No such object.
+        >>> luke = loader('{"__type__": "Jedi", "name": "Luke"}')
+        Traceback (most recent call last):
+            ...
+        ObjectNotFoundError: Cannot decode object Jedi. No such object.
         
     You may have noticed that ``handler`` is optional. If you do not specify a ``handler`` 
     :mod:`jsonweb` will attempt to generate one. It will inspect your class's ``__init__``
@@ -309,15 +308,12 @@ def from_object(handler=None, type_name=None, schema=None):
         >>> person = loader(person_json)
         
     What happens if we dont want to specify ``gender``::
-    
-        >>> from jsonweb.decode import ObjectAttributeError
-        
+            
         >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
-        >>> try:
-        ...     person = loader(person_json)
-        ... except ObjectAttributeError, e:
-        ...     print e
-        Missing gender attribute for Person.
+        >>> person = loader(person_json)
+        Traceback (most recent call last):
+            ...        
+        ObjectAttributeError: Missing gender attribute for Person.
         
     To make ``gender`` optional it must be a keyword argument::
     

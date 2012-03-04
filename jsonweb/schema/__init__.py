@@ -19,7 +19,7 @@ is an example of validating the structure of a python dict::
 Validating plain old python data structures is fine, but the more interesting exercise is tying
 a schema to a class defination::
 
-    >>> from jsonweb.decode import from_object, object_hook
+    >>> from jsonweb.decode import from_object, loader
     >>> from jsonweb.schema import ObjectSchema, ValidationError
     >>> from jsonweb.schema.validators import String, Integer, EnsureType
     
@@ -29,6 +29,18 @@ a schema to a class defination::
     ...    last_name = String()
     ...    gender = String(optional=True)
     ...    job = EnsureType("Job")
+
+You can make any field optional by setting ``optional`` to :class:`True`.  
+
+.. warning::
+
+    The field is only optional at the schema level. If you've bound a schema to
+    a class via :func:`from_object` and the uderlying class requires that field a
+    :class:`ObjectAttributeError` will be raised if missing.
+    
+As you can see its fine to pass a class name as a string, which we have done for 
+the :class:`Job` class above. We must later define :class:`Job` and decorate it 
+with :func:`jsonweb.decode.from_object` ::
 
     >>> class JobSchema(ObjectSchema):
     ...    id = Integer()
@@ -63,7 +75,7 @@ a schema to a class defination::
     ...     }
     ... '''
     
-    >>> person = json.loads(person_json, object_hook=object_hook)
+    >>> person = loader(person_json)
     >>> print person
     <Person name="Bob" job="Police Officer">
     

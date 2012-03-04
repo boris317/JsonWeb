@@ -22,9 +22,9 @@ class BaseValidator(object):
             raise ValidationError("Cannot be null.")
         return self.validate(item)
         
-    def _validate(self, item):
-        
+    def _validate(self, item):        
         raise NotImplemented
+    
     def _class_name(self, obj):
         return obj.__class__.__name__
     

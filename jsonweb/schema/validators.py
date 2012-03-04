@@ -1,9 +1,34 @@
-from jsonweb.schema.base import BaseValidator, ValidationError
+"""
+Validators for use in :mod:`jsonweb.schema`. 
+"""
 from jsonweb.decode import _default_object_handlers
-
 from jsonweb.exceptions import JsonWebError
+from jsonweb.schema.base import BaseValidator, ValidationError
 
 class List(BaseValidator):
+    """
+    Validates a list of things. List's constructor accepts
+    a validator and each item in a the list will be validated
+    against it ::
+    
+        >>> List(Integer).validate([1,2,3,4])
+        ... [1,2,3,4]
+    
+        >>> List(Integer).validate(10)
+        ...
+        ValidationError: Expected list got int instead.
+    Since :class:`ObjectSchema` is also a validator we can do this ::
+    
+        >>> class PersonSchema(ObjectSchema):
+        ...     first_name = String()
+        ...     last_name = String()
+        ...
+        >>> List(PersonSchema).validate([
+        ...     {"first_name": "bob", "last_name": "smith"},
+        ...     {"first_name": "jane", "last_name": "smith"}
+        ... ])
+        
+    """
     def __init__(self, validator, **kw):
         super(List, self).__init__(**kw)
         if type(validator) is type:
@@ -28,6 +53,19 @@ class List(BaseValidator):
         return validated_objs
      
 class EnsureType(BaseValidator):
+    """
+    Validates something is a certian type ::
+    
+        >>> class Person(object):
+        ...     pass
+        >>> EnsureType(Person).validate(Person())
+        ... <Person>
+        >>> EnsureType(Person).validate(10)
+        Traceback (most recent call last):
+            ...
+        ValidationError: Expected Person got int instead.        
+        
+    """
     def __init__(self, _type, type_name=None, **kw):
         super(EnsureType, self).__init__(**kw)
         self.__type = _type
@@ -64,17 +102,42 @@ class EnsureType(BaseValidator):
         
         
 class String(EnsureType):
+    """
+    Validates something is a string ::
+    
+        >>> String().validate("foo")
+        ... 'foo'
+        >>> String().validate(1)
+        Traceback (most recent call last):
+            ...
+        ValidationError: Expected str got int instead.
+        
+    """
     def __init__(self, **kw):
         super(String, self).__init__(basestring, type_name="str", **kw)
 
 class Integer(EnsureType):
+    """ Validates something in an integer """
     def __init__(self, **kw):
         super(Integer, self).__init__(int, **kw)
     
 class Float(EnsureType):
+    """ Validates something is a float """
     def __init__(self, **kw):
         super(Float, self).__init__(float, **kw)
         
 class Number(EnsureType):
+    """
+    Validates something is a number ::
+    
+        >>> Number().validate(1)
+        ... 1
+        >>> Number().validate(1.1)
+        >>> 1.1
+        >>> Number().validate("foo")
+        Traceback (most recent call last):
+            ...
+        ValidationError: Expected number got in instead.        
+    """
     def __init__(self, **kw):
         super(Number, self).__init__((float, int), type_name="number", **kw)
