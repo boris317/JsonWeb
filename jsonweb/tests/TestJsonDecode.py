@@ -8,7 +8,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         _default_object_handlers.clear()
         
     def test_decodes_to_class_instance(self):
-        from jsonweb.decode import from_object, object_hook
+        from jsonweb.decode import from_object, loader
                 
         @from_object()
         class Person(object):
@@ -17,7 +17,7 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
                 self.last_name = last_name
                                 
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
-        person = json.loads(json_str, object_hook=object_hook())
+        person = loader(json_str)
         
         self.assertTrue(isinstance(person, Person))        
         self.assertEqual(person.first_name, "shawn")

@@ -11,8 +11,7 @@ argument accepted by :func:`json.loads`.
 The code in :mod:`jsonweb.decode` uses this ``object_hook`` interface to accomplish the awesomeness you are about to witness.
 Lets turn that ``person`` :class:`dict` into a proper :class:`Person` instance. ::
 
-    >>> import json
-    >>> from jsonweb.decode import from_obj, object_hook
+    >>> from jsonweb.decode import from_obj, loader
 
     >>> @from_object()
     ... class Person(object):
@@ -21,7 +20,7 @@ Lets turn that ``person`` :class:`dict` into a proper :class:`Person` instance. 
     ...         self.last_name = last_name
 
     >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
-    >>> person = json.loads(person_json, object_hook=object_hook)
+    >>> person = loader(person_json)
 
     >>> print type(person)
     <class 'Person'>
@@ -245,7 +244,7 @@ def from_object(handler=None, type_name=None, schema=None):
     receives two arguments, your class and a python dict. Here is an example::
     
         >>> import json
-        >>> from jsonweb.decode import from_object object_hook
+        >>> from jsonweb.decode import from_object, loader
         
         >>> def person_decoder(cls, obj):
         ...    return cls(
@@ -260,7 +259,7 @@ def from_object(handler=None, type_name=None, schema=None):
         ...         self.last_name = last_name
         
         >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
-        >>> person = json.loads(person_json, object_hook=object_hook)
+        >>> person = loader(person_json)
         >>> person
         <Person object at 0x1007d7550>
         
@@ -282,7 +281,7 @@ def from_object(handler=None, type_name=None, schema=None):
     
         >>> from josnweb.decode import ObjectNotFoundError
         >>> try:
-        ...     luke = json.loads('{"__type__": "Jedi", "name": "Luke"}', object_hook=object_hook)
+        ...     luke = loader('{"__type__": "Jedi", "name": "Luke"}')
         ... except ObjectNotFoundError, e:
         ...     print e
         Cannot decode object Jedi. No such object.
@@ -307,7 +306,7 @@ def from_object(handler=None, type_name=None, schema=None):
         ...         self.gender = gender
 
         >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams", "gender": "male"}'
-        >>> person = json.loads(person_json, object_hook=object_hook)
+        >>> person = loader(person_json)
         
     What happens if we dont want to specify ``gender``::
     
@@ -315,7 +314,7 @@ def from_object(handler=None, type_name=None, schema=None):
         
         >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
         >>> try:
-        ...     person = json.loads(person_json, object_hook=object_hook)
+        ...     person = loader(person_json)
         ... except ObjectAttributeError, e:
         ...     print e
         Missing gender attribute for Person.
@@ -330,7 +329,7 @@ def from_object(handler=None, type_name=None, schema=None):
         ...         self.gender = gender
         
         >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
-        >>> person = json.loads(person_json, object_hook=object_hook)
+        >>> person = loader(person_json)
         >>> print person.gender
         None
   
@@ -353,7 +352,7 @@ def from_object(handler=None, type_name=None, schema=None):
         
         >>> person_json = '{"__type__": "Person", "first_name": 12345, "last_name": "Adams"}'
         >>> try:
-        ...     person = json.loads(person_json, object_hook=object_hook)
+        ...     person = loader(person_json)
         ... except ValidationError, e:
         ...     print e.errors["first_name"].message
         Expected str got int instead.
@@ -390,6 +389,8 @@ def object_hook(handlers=None):
             return cls(obj["first_name"], obj["last_name"])
             
         handlers = {"Person": {"cls": Person, "handler": person_decoder}}
+        person = loader(json_str, handlers=handlers)
+        #Or invoking the object_hook interface ourselves
         person = json.loads(json_str, object_hook=object_hook(handlers))
         
     .. note:: 
@@ -433,3 +434,13 @@ def object_hook(handlers=None):
     def handler(obj):
         return decode.decode_obj(obj)
     return handler
+
+def loader(json_str, **kw):
+    """
+    Call this function as you would call :func:`json.loads`. It wraps the :ref:`object_hook` 
+    interface and returns python class instances from your json strings.
+    """
+    handlers = kw.pop("handlers", None)
+    kw["object_hook"] = object_hook(handlers)
+    return json.loads(json_str, **kw)
+
