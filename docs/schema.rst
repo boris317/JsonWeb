@@ -8,10 +8,12 @@
 
 ValidationErrors
 ----------------
+
 blah blah blah blah describe errors.
 
-Validators
------------
+:mod:`jsonweb.schema.validators`
+------------------------------------
+
 .. automodule:: jsonweb.schema.validators
 
 .. autoclass:: jsonweb.schema.validators.String

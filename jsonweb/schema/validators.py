@@ -7,7 +7,7 @@ from jsonweb.schema.base import BaseValidator, ValidationError
 
 class List(BaseValidator):
     """
-    Validates a list of things. List's constructor accepts
+    Validates a list of things. The List constructor accepts
     a validator and each item in a the list will be validated
     against it ::
     
@@ -17,6 +17,7 @@ class List(BaseValidator):
         >>> List(Integer).validate(10)
         ...
         ValidationError: Expected list got int instead.
+        
     Since :class:`ObjectSchema` is also a validator we can do this ::
     
         >>> class PersonSchema(ObjectSchema):
@@ -137,7 +138,8 @@ class Number(EnsureType):
         >>> Number().validate("foo")
         Traceback (most recent call last):
             ...
-        ValidationError: Expected number got in instead.        
+        ValidationError: Expected number got int instead.
+        
     """
     def __init__(self, **kw):
         super(Number, self).__init__((float, int), type_name="number", **kw)
