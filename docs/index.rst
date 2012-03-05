@@ -5,8 +5,7 @@
 
 JsonWeb
 =======
-JsonWeb is a package for encoding and decoding your python classes to and from JSON. I found 
-myself writing a lot of JSON services and I got sick of writing the same boiler plate code over and over again.
+JsonWeb is a packaged designed to easily add JSON encoding/decoding capabilities to your python classes.
    
    
 Main documentation
