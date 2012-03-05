@@ -363,12 +363,32 @@ def from_object(handler=None, type_name=None, schema=None):
         return cls
     return wrapper
 
-def object_hook(handlers=None):
+def object_hook(handlers=None, as_type=None):
     """
     Wrapper around :class:`ObjectHook`. Calling this function
     will configure an instance of :class:`ObjectHook` and return
     a callable suitable for passing to :func:`json.loads` as ``object_hook``.
+
+    If you need to decode a JSON string that does not contain a ``__type__`` key 
+    and you know that the JSON represents a certain object or list of objects you 
+    can use ``as_type`` to specify it ::
     
+        >>> json_str = '{"first_name": "bob", "last_name": "smith"}'
+        >>> loader(json_str, as_type="Person")
+        <Person object at 0x1007d7550>
+        >>> # lists work too
+        >>> json_str = '''[
+        ...     {"first_name": "bob", "last_name": "smith"},
+        ...     {"first_name": "jane", "last_name": "smith"}
+        ... ]'''
+        >>> loader(json_str, as_type="Person")
+        [<Person object at 0x1007d7550>, <Person object at 0x1007d7434>]
+        
+    .. warning::
+    
+        ``as_type`` assumes EVERY object handled is of the type specified. So nested dicts
+        could break object decoding.
+         
     ``handlers`` is a dict with this format::
     
         {"Person": {"cls": Person, "handler": person_decoder, "schema": PersonSchema)}
@@ -376,18 +396,18 @@ def object_hook(handlers=None):
     If you do not wish to decorate your classes with :func:`from_object` you can specify the same
     parameters via the ``handlers`` keyword argument. Here is an exmaple::
         
-        class Person(object):
-            def __init__(self, first_name, last_name):
-                self.first_name = first_name
-                self.last_name = last_name
-                
-        def person_decoder(cls, obj):
-            return cls(obj["first_name"], obj["last_name"])
+        >>> class Person(object):
+        ...    def __init__(self, first_name, last_name):
+        ...        self.first_name = first_name
+        ...        self.last_name = last_name
+        ...        
+        >>> def person_decoder(cls, obj):
+        ...    return cls(obj["first_name"], obj["last_name"])
             
-        handlers = {"Person": {"cls": Person, "handler": person_decoder}}
-        person = loader(json_str, handlers=handlers)
-        #Or invoking the object_hook interface ourselves
-        person = json.loads(json_str, object_hook=object_hook(handlers))
+        >>> handlers = {"Person": {"cls": Person, "handler": person_decoder}}
+        >>> person = loader(json_str, handlers=handlers)
+        >>> # Or invoking the object_hook interface ourselves
+        >>> person = json.loads(json_str, object_hook=object_hook(handlers))
         
     .. note:: 
     
@@ -395,23 +415,22 @@ def object_hook(handlers=None):
         later. Here is an example of overriding a schema you defined with :func:`from_object` (some code is
         left out for brevity)::
         
-            @from_object(schema=PersonSchema)
-            class Person(object):
+            >>> @from_object(schema=PersonSchema)
+            >>> class Person(object):
                 ...
                 
-            #and later on in the code...
-            handlers = {"Person": {"schema": NewPersonSchema}}
-            person = json.loads(json_str, object_hook=object_hook(handlers))
+            >>> # and later on in the code...
+            >>> handlers = {"Person": {"schema": NewPersonSchema}}
+            >>> person = loader(json_str, handlers=handlers)
             
-        This will only override ``schema`` for that one call to :func:`json.loads`. If you'd like 
-        to build an object hook handler for use in many different calls you can do this::
-        
-            ...
-            my_obj_hook = object_hook(handlers)
-            #later on ...
-            person = json.loads(json_str, object_hook=my_obj_hook)
-            #and even later on ...
-            another_person = json.loads(json_str, object_hook=my_obj_hook)                                
+    If you need to use ``as_type`` or ``handlers`` many times in your code you can forgo using :func:`loader` in
+    favor of configuring a "custom" object hook callable. Here is an example ::
+                
+        >>> my_obj_hook = object_hook(handlers)
+        >>> # this call uses custom handlers
+        >>> person = json.loads(json_str, object_hook=my_obj_hook)
+        >>> # and so does this one ...
+        >>> another_person = json.loads(json_str, object_hook=my_obj_hook)                                
     """
     if handlers:
         _object_handlers = _default_object_handlers.copy()
@@ -428,15 +447,26 @@ def object_hook(handlers=None):
                
     decode = ObjectHook(_object_handlers)
     def handler(obj):
+        if as_type:
+            obj["__type__"] = as_type
         return decode.decode_obj(obj)
     return handler
 
 def loader(json_str, **kw):
     """
     Call this function as you would call :func:`json.loads`. It wraps the :ref:`object_hook` 
-    interface and returns python class instances from your JSON strings.
+    interface and returns python class instances from JSON strings.
+    
+    :param handlers: is a dict of handlers. see :func:`object_hook`
+    
+    :param as_type: explicitly specify the type of object the JSON represents. see :func:`object_hook`
+            
+    :param kw: the rest of the kw args will be passed to the underlying :func:`json.loads` calls.
+                
     """
-    handlers = kw.pop("handlers", None)
-    kw["object_hook"] = object_hook(handlers)
+    kw["object_hook"] = object_hook(
+        kw.pop("handlers", None),
+        kw.pop("as_type", None)        
+    )
     return json.loads(json_str, **kw)
 
