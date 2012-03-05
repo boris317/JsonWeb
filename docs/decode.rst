@@ -2,6 +2,9 @@
 ===================================================
 
 .. automodule:: jsonweb.decode
+
+loader
+------
 .. autofunction:: loader
 
 Decorators

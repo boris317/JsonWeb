@@ -434,7 +434,7 @@ def object_hook(handlers=None):
 def loader(json_str, **kw):
     """
     Call this function as you would call :func:`json.loads`. It wraps the :ref:`object_hook` 
-    interface and returns python class instances from your json strings.
+    interface and returns python class instances from your JSON strings.
     """
     handlers = kw.pop("handlers", None)
     kw["object_hook"] = object_hook(handlers)

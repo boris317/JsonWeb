@@ -3,6 +3,10 @@
    
 .. automodule:: jsonweb.encode
 
+dumper
+------
+.. autofunction:: dumper
+
 Decorators
 ----------
 
