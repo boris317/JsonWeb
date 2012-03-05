@@ -3,7 +3,7 @@ import unittest
 
 class TestJsonEnecode(unittest.TestCase):
     def test_json_object_decorator(self):
-        from jsonweb.encode import to_object, JsonWebEncoder
+        from jsonweb.encode import to_object, dumper
                 
         @to_object(suppress=["foo", "__type__"])
         class Person(object):
@@ -13,12 +13,12 @@ class TestJsonEnecode(unittest.TestCase):
                 self.last_name = last_name
         
         person = Person("shawn", "adams")
-        json_obj = json.loads(json.dumps(person, cls=JsonWebEncoder))
+        json_obj = json.loads(dumper(person))
         
         self.assertEqual(json_obj, {"first_name": "shawn", "last_name": "adams"})
         
     def test_subclass_json_web_encoder(self):
-        from jsonweb.encode import to_object, JsonWebEncoder
+        from jsonweb.encode import to_object, JsonWebEncoder, dumper
         
         message = []
         class MyJsonWebEncoder(JsonWebEncoder):
@@ -37,7 +37,7 @@ class TestJsonEnecode(unittest.TestCase):
                 self.last_name = last_name
         
         person = Person("shawn", "adams")
-        json_obj = json.loads(json.dumps(person, cls=MyJsonWebEncoder))
+        json_obj = json.loads(dumper(person, cls=MyJsonWebEncoder))
         
         self.assertEqual(json_obj, {"__type__": "Person", "first_name": "shawn", "last_name": "adams"})
         self.assertEqual(message[0], "my_object_handler")

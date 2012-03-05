@@ -2,9 +2,8 @@
 Often times in a web application the data you wish to return to users is described by some sort
 of data model or resource in the form of a class object. This module provides an easy way to encode
 your python class instances to json Here is a quick example::
-
-    >>> import json
-    >>> from jsonweb.encode import to_object, JsonWebEncoder
+ 
+    >>> from jsonweb.encode import to_object, dumper
     
     >>> @to_object()
     ... class DataModel(object):
@@ -13,16 +12,11 @@ your python class instances to json Here is a quick example::
     ...          self.value = value
             
     >>> data = DataModel(5, "foo")
-    >>> json.dumps(data, cls=JsonWebEncoder)
+    >>> dumper(data)
     '{"__type__": "DataModel", "id": 5, "value": "foo"}'
 
-:func:`to_object` and :func:`to_list` are class decorators. If you have a class you wish to serialize
-to a json object decorate it with :func:`to_object`. If your class should serialize into a json list 
-decorate it with :func:`to_list`.
-
-.. note::
-
-    Remember to pass :class:`JsonWebEncoder` as the ``cls`` argument to :func:`json.dumps`.
+If you have a class you wish to serialize to a json object decorate it with :func:`to_object`. 
+If your class should serialize into a json list decorate it with :func:`to_list`.
 """
 
 import json
@@ -50,7 +44,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
         ...         self.last_name = last_name
                 
         >>> person = Person("Shawn", "Adams")
-        >>> json.dumps(person, cls=JsonWebEncoder)                                        
+        >>> dumper(person)
         '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
     
     A ``__type__`` key is automatically added to the json object.  Its value should represent
@@ -64,7 +58,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
         ...         self.last_name = last_name
                 
         >>> person = Person("Shawn", "Adams")
-        >>> json.dumps(person, cls=JsonWebEncoder)        
+        >>> dumper(person)
         '{"__type__": "PersonObject", "first_name": "Shawn", "last_name": "Adams"}'
                   
     If you would like to leave some attributes out of the resulting json simply
@@ -77,7 +71,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
         ...         self.last_name = last_name
         
         >>> person = Person("Shawn", "Adams")
-        >>> json.dumps(person, cls=JsonWebEncoder)
+        >>> dumper(person)
         '{"__type__": "Person", "first_name": "Shawn"}'        
                 
     You can even suppress the ``__type__`` attribute ::
@@ -102,7 +96,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
         ...         self.last_name = last_name
                 
         >>> person = Person("Shawn", "Adams")
-        >>> json.dumps(person, cls=JsonWebEncoder)        
+        >>> dumper(person)
         '{"FirstName": "Shawn", "LastName": "Adams"}'
             
     """
@@ -221,8 +215,15 @@ class JsonWebEncoder(json.JSONEncoder):
         .. note::
         
             Override this method if you wish to change how ALL objects are encoded into json lists.        
-        
-        
-        """
-        
+                
+        """        
         return list(obj)
+    
+def dumper(obj, **kw):
+    """
+    To JSON encode your class instances call this function as you would call 
+    :func:`json.dumps`. ``kw`` args will be passed to the underlying json.dumps call
+    """
+    return json.dumps(obj, cls=kw.pop("cls", JsonWebEncoder), **kw)
+
+    
