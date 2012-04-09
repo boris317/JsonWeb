@@ -171,6 +171,7 @@ class JsonWebEncoder(json.JSONEncoder):
     """
     
     _DT_FORMAT = "%Y-%m-%dT%H:%M:%S"
+    _D_FORMAT = "%Y-%m-%d"
         
     def default(self, o):        
         try:
@@ -185,8 +186,10 @@ class JsonWebEncoder(json.JSONEncoder):
             elif e_args.serialize_as == "json_list":
                 return self.list_handler(o)
             
-        if isinstance(o, datetime):
-            return o.strftime(self._DT_FORMAT)            
+        if isinstance(o, datetime.datetime):
+            return o.strftime(self._DT_FORMAT)
+        if isinstance(o, datetime.date):
+            return o.strftime(self._D_FORMAT)
         return json.JSONEncoder.default(self, o)
     
     def object_handler(self, obj):
