@@ -208,7 +208,10 @@ class JsonWebEncoder(json.JSONEncoder):
             
         """        
         suppress = obj._encode.suppress
-        json_obj = dict([(k,v) for k,v in obj.__dict__.iteritems() if not k.startswith("_") and k not in suppress])
+        json_obj = {}
+        for attr in dir(obj):
+            if not attr.startswith("_") and attr not in suppress:
+                json_obj[attr] = obj.__getattribute__(attr)
         if "__type__" not in suppress:
             json_obj["__type__"] = obj._encode.__type__
         return json_obj
