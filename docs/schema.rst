@@ -9,10 +9,11 @@
 ValidationErrors
 ----------------
 
-blah blah blah blah describe errors.
+.. autoclass:: ValidationError
 
-:mod:`jsonweb.schema.validators`
-------------------------------------
+
+Validators
+-------------
 
 .. automodule:: jsonweb.schema.validators
 
