@@ -151,7 +151,6 @@ def to_list(cls):
     cls._serialize_as = "json_list"
     return cls
 
-
 class JsonWebEncoder(json.JSONEncoder):
     """
     This :class:`json.JSONEncoder` subclass is responsible for encoding instances of 
@@ -172,6 +171,11 @@ class JsonWebEncoder(json.JSONEncoder):
     
     _DT_FORMAT = "%Y-%m-%dT%H:%M:%S"
     _D_FORMAT = "%Y-%m-%d"
+    def __init__(self, **kw):
+        self.__hard_suppress = kw.pop("suppress", [])
+        if not isinstance(self.__hard_suppress, list):
+            self.__hard_suppress = [self.__hard_suppress]
+        json.JSONEncoder.__init__(self, **kw)
         
     def default(self, o):        
         try:
@@ -206,13 +210,17 @@ class JsonWebEncoder(json.JSONEncoder):
         
             Override this method if you wish to change how ALL objects are encoded into JSON objects.
             
-        """        
+        """
         suppress = obj._encode.suppress
         json_obj = {}
+        
+        def suppressed(key):
+            return key in suppress or key in self.__hard_suppress        
+        
         for attr in dir(obj):
-            if not attr.startswith("_") and attr not in suppress:
+            if not attr.startswith("_") and not suppressed(attr):
                 json_obj[attr] = obj.__getattribute__(attr)
-        if "__type__" not in suppress:
+        if not suppressed("__type__"):
             json_obj["__type__"] = obj._encode.__type__
         return json_obj
     
@@ -234,6 +242,9 @@ def dumper(obj, **kw):
     """
     JSON encode your class instances by calling this function as you would call 
     :func:`json.dumps`. ``kw`` args will be passed to the underlying json.dumps call.
+
+    :param cls: To override the given encoder. Should be a subclass of :class:`JsonWebEncoder`
+    :param suppress: A list of extra fields to suppress (as well as those suppressed by the class)    
     """
     return json.dumps(obj, cls=kw.pop("cls", JsonWebEncoder), **kw)
 

@@ -83,5 +83,39 @@ class TestJsonEnecode(unittest.TestCase):
         del person
         person = loader(json_str)
         self.assertTrue(isinstance(person, Person))
-                 
         
+    def test_attributes_are_suppressed(self):
+        from jsonweb.encode import to_object, dumper
+        
+        @to_object(suppress=["foo"])
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.foo = "bar"
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        person = Person("shawn", "adams")                 
+        json_obj = json.loads(dumper(person))
+        self.assertTrue("foo" not in json_obj)
+        
+    def test_dumper_suppress_keyword(self):
+        from jsonweb.encode import to_object, dumper
+        
+        @to_object(suppress=["foo"])
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.foo = "bar"
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        person = Person("shawn", "adams")                 
+        json_obj = json.loads(dumper(person))
+        
+        self.assertTrue("foo" not in json_obj)
+        self.assertTrue("first_name" in json_obj)
+        self.assertTrue("last_name" in json_obj)
+        
+        json_obj = json.loads(dumper(person, suppress="first_name"))
+        self.assertTrue("foo" not in json_obj)                
+        self.assertTrue("first_name" not in json_obj)
+        self.assertTrue("last_name" in json_obj)           
