@@ -42,6 +42,25 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertEqual(json_obj, {"__type__": "Person", "first_name": "shawn", "last_name": "adams"})
         self.assertEqual(message[0], "my_object_handler")
         
+    def test_methods_dont_get_serialized(self):
+        from jsonweb.encode import to_object, dumper
+        
+        @to_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.foo = "bar"
+                self.first_name = first_name
+                self.last_name = last_name
+                
+            def foo_method(self):
+                return self.foo
+        person = Person("shawn", "adams")
+        
+        # the dumper call with actually fail if it tries to
+        # serialize a method type.
+        self.assertIsInstance(dumper(person), basestring)
+
+        
     def test_supplied_obj_handler(self):
         from jsonweb.encode import to_object, dumper
                 
@@ -118,4 +137,18 @@ class TestJsonEnecode(unittest.TestCase):
         json_obj = json.loads(dumper(person, suppress="first_name"))
         self.assertTrue("foo" not in json_obj)                
         self.assertTrue("first_name" not in json_obj)
-        self.assertTrue("last_name" in json_obj)           
+        self.assertTrue("last_name" in json_obj)   
+        
+    def test_suppress__type__attribute(self):
+        from jsonweb.encode import to_object, dumper
+        
+        @to_object(suppress=["__type__"])
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.foo = "bar"
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        person = Person("shawn", "adams")                 
+        json_obj = json.loads(dumper(person))  
+        self.assertTrue("__type__" not in json_obj)        

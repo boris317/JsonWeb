@@ -21,6 +21,7 @@ If your class should serialize into a JSON list decorate it with :func:`to_list`
 
 import json
 import datetime
+import types
 
 class EncodeArgs:
     __type__ = None
@@ -219,7 +220,9 @@ class JsonWebEncoder(json.JSONEncoder):
         
         for attr in dir(obj):
             if not attr.startswith("_") and not suppressed(attr):
-                json_obj[attr] = obj.__getattribute__(attr)
+                value = getattr(obj, attr)
+                if not isinstance(value, types.MethodType):
+                    json_obj[attr] = value
         if not suppressed("__type__"):
             json_obj["__type__"] = obj._encode.__type__
         return json_obj
