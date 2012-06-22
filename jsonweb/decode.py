@@ -115,9 +115,14 @@ class JsonWebObjectHandler(object):
 class _ObjectHandlers(object):
     def __init__(self):
         self.__handlers = {}
+        self.__deferred_updates = {}
         
     def add_handler(self, cls, handler, type_name=None, schema=None):
-        self.__handlers[type_name or cls.__name__] = (handler, cls, schema)
+        name = type_name or cls.__name__
+        self.__handlers[name] = self.__merge_tuples(
+            self.__deferred_updates.get(name, (None,)*3),            
+            (handler, cls, schema)
+        )
         
     def get(self, name):
         """
@@ -135,20 +140,40 @@ class _ObjectHandlers(object):
     
     def clear(self):
         self.__handlers = {}
+        self.__deferred_updates = {}
         
     def update_handler(self, name, cls=None, handler=None, schema=None):
-        # @@ Catch key errors?
-        handler_tuple = self[name]
-        self.set(name, tuple([
-            handler or handler_tuple[0],
-            cls or handler_tuple[1],
-            schema or handler_tuple[2]            
-        ]))
+        """
+        Modify cls, handler and schema for a decorated class. 
+        """
+        handler_tuple = self.__handlers[name]
+        self.set(name, self.__merge_tuples((handler, cls, schema), handler_tuple))
+                 
+    def _update_handler_deferred(self, name, cls=None, handler=None, schema=None):
+        """
+        If an entry does not exsist in __handlers an entry will be added 
+        to __deferred_updates instead. Then when add_handler is finally called
+        values will be updated accordingly. Items in __deferred_updates will take
+        precedence over those passed into add_handler.
+        """
+        if name in self.__handlers:
+            self.update_handler(name, cls, handler, schema)
+            return
+        d = self.__deferred_updates.get(name, (None,)*3)
+        self.__deferred_updates[name] = self.__merge_tuples((handler, cls, schema), d)
         
     def copy(self):
         handler_copy = _ObjectHandlers()
         [handler_copy.set(n,t) for n,t in self]
         return handler_copy
+    
+    def __merge_tuples(self, a_tuple, b_tuple):
+        """
+        "Merge" two tuples of the same length. a takes precedence over b.
+        """        
+        if len(a_tuple) != len(b_tuple):
+            raise ValueError("Iterators differ in length.")
+        return tuple([(a or b) for a, b in zip(a_tuple, b_tuple)])
     
     def __contains__(self, handler_name):
         return handler_name in self.__handlers

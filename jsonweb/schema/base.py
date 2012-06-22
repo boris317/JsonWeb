@@ -62,3 +62,10 @@ class ObjectSchema(BaseValidator):
             raise ValidationError("Error validating object", errors)
         return val_obj
     
+def bind_schema(type_name, schema_obj):
+    from jsonweb.decode import _default_object_handlers
+    """
+    Use this function to add an :class:`ObjectSchema` to a class already
+    decorated by :func:`from_object`.
+    """
+    _default_object_handlers._update_handler_deferred(type_name, schema=schema_obj)

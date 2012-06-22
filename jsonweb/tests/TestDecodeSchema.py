@@ -181,5 +181,46 @@ class TestDecodeSchema(unittest.TestCase):
         request_obj = json.loads(json.dumps(obj), object_hook=object_hook())
         self.assertEqual(len(request_obj["persons"]), 2)
         self.assertTrue(isinstance(request_obj["persons"][0], Person))
-                    
         
+    def test_map_schema_func(self):
+        from jsonweb.schema import ObjectSchema, ValidationError, bind_schema
+        from jsonweb.schema.validators import String
+        from jsonweb.decode import from_object, loader
+        
+        class PersonSchema(ObjectSchema):
+            first_name = String()
+            last_name = String()
+           
+        @from_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name        
+                    
+        bind_schema("Person", PersonSchema)
+        with self.assertRaises(ValidationError) as context:
+            loader('{"__type__": "Person"}')
+            
+    def test_map_schema_called_before_class_is_decorated(self):
+        """
+        Test binding a schema to a class before it is defined works.
+        """
+        from jsonweb.schema import ObjectSchema, ValidationError, bind_schema
+        from jsonweb.schema.validators import String
+        from jsonweb.decode import from_object, loader
+        
+        class PersonSchema(ObjectSchema):
+            first_name = String()
+            last_name = String()
+
+        bind_schema("Person", PersonSchema)
+        
+        @from_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name        
+                    
+
+        with self.assertRaises(ValidationError) as context:
+            loader('{"__type__": "Person"}')

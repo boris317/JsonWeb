@@ -82,4 +82,4 @@ with :func:`jsonweb.decode.from_object` ::
 
 
 """
-from jsonweb.schema.base import ObjectSchema, ValidationError
+from jsonweb.schema.base import ObjectSchema, ValidationError, bind_schema
