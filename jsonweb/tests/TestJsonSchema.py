@@ -172,6 +172,18 @@ class TestEachValidator(unittest.TestCase):
         exception = context.exception
         self.assertEqual("Expected str got int instead.", str(exception))
         
+    def test_string_validator_max_len_kw(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import String
+        
+        v = String(max_len=3)
+        self.assertEqual(v.validate("foo"), "foo")
+        with self.assertRaises(ValidationError) as context:
+            v.validate("foobar")
+            
+        exception = context.exception
+        self.assertEqual("String exceeds max length of 3.", str(exception))        
+        
     def test_integer_validator(self):
         from jsonweb.schema import ValidationError
         from jsonweb.schema.validators import Integer

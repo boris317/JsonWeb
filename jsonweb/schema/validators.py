@@ -115,9 +115,24 @@ class String(EnsureType):
             ...
         ValidationError: Expected str got int instead.
         
+    You can also specify a maximum string length ::
+    
+        >>> String(max_len=3).validate("foobar")
+        Traceback (most recent call last):
+        ...
+        ValidationError: String exceeds max length of 3.
+            
     """
-    def __init__(self, **kw):
+    def __init__(self, max_len=None, **kw):
         super(String, self).__init__(basestring, type_name="str", **kw)
+        self.max_len = max_len
+        
+    def validate(self, item):
+        value = super(String, self).validate(item)
+        if self.max_len and len(value) > self.max_len:
+            raise ValidationError("String exceeds max length of %s." % self.max_len)
+        return value
+                                
 
 class Integer(EnsureType):
     """ Validates something in an integer """
