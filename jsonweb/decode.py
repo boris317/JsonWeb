@@ -411,7 +411,7 @@ def object_hook(handlers=None, as_type=None):
         
     .. warning::
     
-        ``as_type`` assumes EVERY object handled is of the type specified. So nested dicts
+        ``as_type`` assumes EVERY object WITHOUT ``__type__`` is of the type specified. So nested dicts
         could break object decoding.
          
     ``handlers`` is a dict with this format::
@@ -472,7 +472,7 @@ def object_hook(handlers=None, as_type=None):
                
     decode = ObjectHook(_object_handlers)
     def handler(obj):
-        if as_type:
+        if as_type and "__type__" not in obj:
             obj["__type__"] = as_type
         return decode.decode_obj(obj)
     return handler

@@ -228,7 +228,35 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         self.assertTrue(isinstance(persons, list))
         self.assertEqual(len(persons), 2)
         self.assertTrue(isinstance(persons[0], Person))
-        self.assertTrue(isinstance(persons[1], Person))        
+        self.assertTrue(isinstance(persons[1], Person))  
+  
+    def test_supplied__type__trumps_as_type(self):
+        """
+        Test that the __type__ key trumps as_type
+        """
+
+        from jsonweb.decode import from_object, loader
+        from jsonweb.decode import ObjectDecodeError
+        
+        @from_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+            
+        @from_object()
+        class Alien(object):
+            def __init__(self, planet, number_of_legs):
+                self.planet = planet
+                self.number_of_legs = number_of_legs
+                
+        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
+        self.assertTrue(isinstance(loader(json_str, as_type="Alien"), Person))
+        
+        json_str = '{"first_name": "shawn", "last_name": "adams"}'        
+        with self.assertRaises(ObjectDecodeError):
+            loader(json_str, as_type="Alien")
+
                         
     def test_configured_object_hook_closure(self):
         """
