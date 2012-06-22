@@ -245,3 +245,16 @@ class TestEachValidator(unittest.TestCase):
         exception = context.exception
         self.assertEqual("Expected one of (int, float) got str instead.", str(exception))
         
+    def test_datetime_validator(self):
+        from datetime import datetime
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import DateTime
+   
+        v = DateTime()
+        self.assertIsInstance(v.validate("2012-01-01 12:30:00"), datetime)
+        
+        with self.assertRaises(ValidationError) as context:
+            v.validate("01-01-2012")
+            
+        exception = context.exception
+        self.assertEqual("time data '01-01-2012' does not match format '%Y-%m-%d %H:%M:%S'", str(exception))        

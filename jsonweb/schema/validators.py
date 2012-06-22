@@ -1,6 +1,8 @@
 """
 Validators for use in :mod:`jsonweb.schema`. 
 """
+from datetime import datetime
+
 from jsonweb.decode import _default_object_handlers
 from jsonweb.exceptions import JsonWebError
 from jsonweb.schema.base import BaseValidator, ValidationError
@@ -143,3 +145,33 @@ class Number(EnsureType):
     """
     def __init__(self, **kw):
         super(Number, self).__init__((float, int), type_name="number", **kw)
+
+class DateTime(BaseValidator):
+    """
+    Validates that something is a date/datetime string ::
+    
+        >>> DateTime().validate("2010-01-02 12:30:00")
+        ... datetime.datetime(2010, 1, 2, 12, 30)
+        
+        >>> DateTime().validate("2010-01-02 12:300")
+        Traceback (most recent call last):
+            ...
+        ValidationError: time data '2010-01-02 12:300' does not match format '%Y-%m-%d %H:%M:%S'
+        
+    The default datetime format is ``%Y-%m-%d %H:%M:%S``. You can specify your own ::
+    
+        >>> DateTime("%m/%d/%Y").validate("01/02/2010")
+        ... datetime.datetime(2010, 1, 2, 0, 0)    
+        
+        
+    """
+    def __init__(self, format="", **kw):
+        super(DateTime, self).__init__(**kw)
+        self.format = format or "%Y-%m-%d %H:%M:%S"
+        
+    def validate(self, item):
+        try:
+            return datetime.strptime(item, self.format)
+        except ValueError, e:
+            raise ValidationError(str(e))
+    

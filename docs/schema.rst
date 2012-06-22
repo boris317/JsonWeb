@@ -21,5 +21,6 @@ Validators
 .. autoclass:: jsonweb.schema.validators.Number
 .. autoclass:: jsonweb.schema.validators.Integer
 .. autoclass:: jsonweb.schema.validators.Float
+.. autoclass:: jsonweb.schema.validators.DateTime
 .. autoclass:: jsonweb.schema.validators.EnsureType
 .. autoclass:: jsonweb.schema.validators.List
