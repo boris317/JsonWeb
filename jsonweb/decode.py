@@ -135,7 +135,6 @@ class _ObjectHandlers(object):
         """
         Add a hanlder tuple (handler, cls, schema)
         """
-        print name, handler_tuple
         self.__handlers[name] = handler_tuple
     
     def clear(self):
