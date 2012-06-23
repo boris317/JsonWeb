@@ -166,8 +166,7 @@ class JsonWebEncoder(json.JSONEncoder):
     Using :func:`dumper` is a shortcut for the above call to :func:`json.dumps` ::
     
         dumper(obj_instance) #much nicer!
-    
-            
+                
     """
     
     _DT_FORMAT = "%Y-%m-%dT%H:%M:%S"

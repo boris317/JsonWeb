@@ -224,3 +224,49 @@ class TestDecodeSchema(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as context:
             loader('{"__type__": "Person"}')
+            
+    def test_EnsureType_invoked_via_List_validator_honors_string_class_names(self):
+        from jsonweb import loader
+        from jsonweb.decode import from_object
+        from jsonweb.schema import ObjectSchema
+        from jsonweb.schema.validators import EnsureType, List, String, Integer
+        
+        class JobSchema(ObjectSchema):
+            id = Integer()
+            title = String()
+            
+        class PersonSchema(ObjectSchema):
+            first_name = String()
+            last_name = String()
+            jobs = List(EnsureType("Job"))
+            
+        @from_object(schema=JobSchema)
+        class Job(object):
+            def __init__(self, id, title):
+                self.id = id
+                self.title = title
+                
+        @from_object(schema=PersonSchema)
+        class Person(object):
+            def __init__(self, first_name, last_name, jobs):
+                self.first_name = first_name
+                self.last_name = last_name
+                self.jobs = jobs
+        
+        obj = {
+            "__type__": "Person",
+            "first_name": "Shawn",
+            "last_name": "Adams", 
+            "id": 1, 
+            "test": 12.0, 
+            "jobs": [{
+                "__type__": "Job",
+                "title": "zoo keeper", 
+                "id": 1
+            }]
+        }
+                
+        person = loader(json.dumps(obj))
+        self.assertTrue(isinstance(person, Person))
+        self.assertTrue(isinstance(person.jobs, list))
+        self.assertTrue(isinstance(person.jobs[0], Job))        

@@ -44,7 +44,11 @@ class List(BaseValidator):
             raise ValidationError("Expected list got %s instead." % self._class_name(item))
         validated_objs = []
         errors = []
-
+        # We must manually envoke the descriptor protocol so that
+        # any string names passed to EnsureType get translated to
+        # an actual class.
+        if isinstance(self.validator, EnsureType):
+            self.validator = self.validator.__get__(self, List)
         for i, obj in enumerate(item):
             try:
                 validated_objs.append(self.validator.validate(obj))
