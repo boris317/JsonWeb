@@ -26,6 +26,28 @@ class TestDecodeSchema(unittest.TestCase):
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'                
         person = json.loads(json_str, object_hook=object_hook())
         self.assertTrue(isinstance(person, Person))
+        
+    def test_schemas_do_not_run_when_validate_kw_is_false(self):
+        from jsonweb.schema import ObjectSchema, ValidationError
+        from jsonweb.schema.validators import String
+        
+        from jsonweb.decode import from_object, loader, ObjectDecodeError
+        
+        class PersonSchema(ObjectSchema):
+            first_name = String()
+            last_name = String()
+            
+        @from_object(schema=PersonSchema)
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+        
+        json_str = '{"__type__": "Person", "last_name": "adams"}'
+        with self.assertRaises(ValidationError) as context:
+            person = loader(json_str)        
+        with self.assertRaises(ObjectDecodeError) as context:
+            person = loader(json_str, validate=False)
 
     def test_decode_with_schema_raises_error(self):
         """

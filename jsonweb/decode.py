@@ -192,8 +192,9 @@ class ObjectHook(object):
     """
     _DT_FORMAT = _DATETIME_FORMAT
             
-    def __init__(self, handlers):
-        self.handlers = handlers      
+    def __init__(self, handlers, validate=True):
+        self.handlers = handlers
+        self.validate = validate
             
     def decode_obj(self, obj):
         """        
@@ -212,7 +213,7 @@ class ObjectHook(object):
         except KeyError:
             raise ObjectNotFoundError(obj_type)
                 
-        if schema:
+        if schema and self.validate:
             obj = schema().validate(obj)
         try:
             return factory(cls, obj)
@@ -387,7 +388,7 @@ def from_object(handler=None, type_name=None, schema=None):
         return cls
     return wrapper
 
-def object_hook(handlers=None, as_type=None):
+def object_hook(handlers=None, as_type=None, validate=True):
     """
     Wrapper around :class:`ObjectHook`. Calling this function
     will configure an instance of :class:`ObjectHook` and return
@@ -469,7 +470,7 @@ def object_hook(handlers=None, as_type=None):
     else:
         _object_handlers = _default_object_handlers
                
-    decode = ObjectHook(_object_handlers)
+    decode = ObjectHook(_object_handlers, validate)
     def handler(obj):
         if as_type and "__type__" not in obj:
             obj["__type__"] = as_type
@@ -484,13 +485,17 @@ def loader(json_str, **kw):
     :param handlers: is a dict of handlers. see :func:`object_hook`
     
     :param as_type: explicitly specify the type of object the JSON represents. see :func:`object_hook`
+    
+    :param validate: Set to False to turn off validation (ie dont run the schemas) during this load operation. Defaults to True.
             
     :param kw: the rest of the kw args will be passed to the underlying :func:`json.loads` calls.
+    
                 
     """
     kw["object_hook"] = object_hook(
         kw.pop("handlers", None),
-        kw.pop("as_type", None)        
+        kw.pop("as_type", None),
+        kw.pop("validate", True)
     )
     return json.loads(json_str, **kw)
 
