@@ -79,7 +79,23 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
     
         @to_object(suppress=["last_name", "__type__"])
         ...
-                          
+        
+    Sometimes it's useful to suppress ``None`` values from your JSON output. Setting ``exclude_nulls`` to 
+    ``True`` will accomplish this ::
+    
+        >>> @to_object(exclude_nulls=True)
+        ... class Person(object):
+        ...     def __init__(self, first_name, last_name):
+        ...         self.first_name = first_name
+        ...         self.last_name = last_name
+    
+        >>> person = Person("Shawn", None)
+        >>> dumper(person)
+        '{"__type__": "Person", "first_name": "Shawn"}'
+    
+    You can also pass ``exclude_nulls`` to :func:`dumper`. It takes precedence over what you passed to
+    :func:`to_object` and only effects that one call.
+    
     If you need greater control over how your object is encoded you can specify a ``handler`` callable.
     It should accept one argument, which is the object to encode, and it should return
     a dict. This would overide the default object handler :func:`JsonWebEncoder.object_handler`.
