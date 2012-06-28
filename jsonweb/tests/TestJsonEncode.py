@@ -153,7 +153,7 @@ class TestJsonEnecode(unittest.TestCase):
         json_obj = json.loads(dumper(person))  
         self.assertTrue("__type__" not in json_obj)
         
-    def test_exclude_nulls_kw_arg(self):
+    def test_exclude_nulls_kw_arg_dumper(self):
         from jsonweb.encode import to_object, dumper
         
         @to_object()
@@ -164,5 +164,33 @@ class TestJsonEnecode(unittest.TestCase):
                 self.last_name = last_name
                 
         person = Person("shawn", None)                 
-        json_obj = json.loads(dumper(person, exclude_nulls=True))  
-        self.assertTrue("last_name" not in json_obj)        
+        json_obj = json.loads(dumper(person, exclude_nulls=True))
+        self.assertTrue("last_name" not in json_obj)
+        
+    def test_exclude_nulls_kw_args_to_object(self):
+        from jsonweb.encode import to_object, dumper
+        
+        @to_object(exclude_nulls=True)
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.foo = "bar"
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        person = Person("shawn", None)                 
+        json_obj = json.loads(dumper(person))
+        self.assertTrue("last_name" not in json_obj)
+        
+    def test_exlude_nulls_on_dumper_trumps_to_object(self):
+        from jsonweb.encode import to_object, dumper
+        
+        @to_object(exclude_nulls=True)
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.foo = "bar"
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        person = Person("shawn", None)                 
+        json_obj = json.loads(dumper(person, exclude_nulls=False))
+        self.assertTrue("last_name" in json_obj)        

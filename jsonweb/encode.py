@@ -29,7 +29,7 @@ class EncodeArgs:
     handler = None
     suppress = None
 
-def to_object(cls_type=None, suppress=[], handler=None):
+def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
     """
     To make your class instances JSON encodable decorate them with :func:`json_object`. 
     The class instance's ``__dict__`` attribute will be used to retrieve the key/value pairs that will 
@@ -106,6 +106,7 @@ def to_object(cls_type=None, suppress=[], handler=None):
         cls._encode.serialize_as = "json_object"
         cls._encode.handler = handler
         cls._encode.suppress = suppress
+        cls._encode.exclude_nulls = exclude_nulls
         cls._encode.__type__ = cls_type or cls.__name__        
         return cls
     
@@ -173,7 +174,7 @@ class JsonWebEncoder(json.JSONEncoder):
     _D_FORMAT = "%Y-%m-%d"
     def __init__(self, **kw):
         self.__hard_suppress = kw.pop("suppress", [])
-        self.__exclude_nulls = kw.pop("exclude_nulls", False)
+        self.__exclude_nulls = kw.pop("exclude_nulls", None)
         if not isinstance(self.__hard_suppress, list):
             self.__hard_suppress = [self.__hard_suppress]
         json.JSONEncoder.__init__(self, **kw)
@@ -213,6 +214,10 @@ class JsonWebEncoder(json.JSONEncoder):
             
         """
         suppress = obj._encode.suppress
+        if self.__exclude_nulls is not None:
+            exclude_nulls = self.__exclude_nulls
+        else:
+            exclude_nulls = obj._encode.exclude_nulls
         json_obj = {}
         
         def suppressed(key):
@@ -221,7 +226,7 @@ class JsonWebEncoder(json.JSONEncoder):
         for attr in dir(obj):
             if not attr.startswith("_") and not suppressed(attr):
                 value = getattr(obj, attr)
-                if value is None and self.__exclude_nulls:
+                if value is None and exclude_nulls:
                     continue
                 if not isinstance(value, types.MethodType):
                     json_obj[attr] = value
