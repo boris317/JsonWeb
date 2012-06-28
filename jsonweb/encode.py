@@ -173,6 +173,7 @@ class JsonWebEncoder(json.JSONEncoder):
     _D_FORMAT = "%Y-%m-%d"
     def __init__(self, **kw):
         self.__hard_suppress = kw.pop("suppress", [])
+        self.__exclude_nulls = kw.pop("exclude_nulls", False)
         if not isinstance(self.__hard_suppress, list):
             self.__hard_suppress = [self.__hard_suppress]
         json.JSONEncoder.__init__(self, **kw)
@@ -220,6 +221,8 @@ class JsonWebEncoder(json.JSONEncoder):
         for attr in dir(obj):
             if not attr.startswith("_") and not suppressed(attr):
                 value = getattr(obj, attr)
+                if value is None and self.__exclude_nulls:
+                    continue
                 if not isinstance(value, types.MethodType):
                     json_obj[attr] = value
         if not suppressed("__type__"):
@@ -246,7 +249,8 @@ def dumper(obj, **kw):
     :func:`json.dumps`. ``kw`` args will be passed to the underlying json.dumps call.
 
     :param cls: To override the given encoder. Should be a subclass of :class:`JsonWebEncoder`
-    :param suppress: A list of extra fields to suppress (as well as those suppressed by the class)    
+    :param suppress: A list of extra fields to suppress (as well as those suppressed by the class)
+    :param exclude_nulls: Set True to suppress keys with null (None) values from the JSON output. Defaults to False.
     """
     return json.dumps(obj, cls=kw.pop("cls", JsonWebEncoder), **kw)
 
