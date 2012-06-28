@@ -166,7 +166,8 @@ def to_list(cls):
         ]
         
     """
-    cls._serialize_as = "json_list"
+    cls._encode = EncodeArgs()
+    cls._encode.serialize_as = "json_list"
     return cls
 
 class JsonWebEncoder(json.JSONEncoder):

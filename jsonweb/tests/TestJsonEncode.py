@@ -17,6 +17,29 @@ class TestJsonEnecode(unittest.TestCase):
         
         self.assertEqual(json_obj, {"first_name": "shawn", "last_name": "adams"})
         
+    def test_json_list_decorator(self):
+        from jsonweb.encode import to_object, to_list, dumper
+                
+        @to_list
+        class NickNames(object):
+            def __init__(self, nicknames):
+                self.nicknames = nicknames
+            def __iter__(self):
+                return iter(self.nicknames)
+            
+        @to_object(suppress=["foo", "__type__"])
+        class Person(object):
+            def __init__(self, first_name, last_name, nicknames=[]):
+                self.foo = "bar"
+                self.first_name = first_name
+                self.last_name = last_name
+                self.nicknames = NickNames(nicknames)
+        
+        person = Person("shawn", "adams", ["Boss", "Champ"])
+        json_obj = json.loads(dumper(person))
+        
+        self.assertEqual(json_obj, {"first_name": "shawn", "last_name": "adams", "nicknames": ["Boss", "Champ"]})
+        
     def test_subclass_json_web_encoder(self):
         from jsonweb.encode import to_object, JsonWebEncoder, dumper
         
