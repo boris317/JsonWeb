@@ -136,7 +136,6 @@ class String(EnsureType):
         if self.max_len and len(value) > self.max_len:
             raise ValidationError("String exceeds max length of %s." % self.max_len)
         return value
-                                
 
 class Integer(EnsureType):
     """ Validates something in an integer """
