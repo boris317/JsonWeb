@@ -201,8 +201,9 @@ class ObjectHook(object):
         This method is called for every dict decoded in a json string. The presense
         of the key ``__type__`` in ``obj`` will trigger a lookup in ``self.handlers``. If a handler is
         not found for ``__type__`` then an :exc:`ObjectNotFoundError` is raised. If a handler is found it will
-        be called with ``obj`` as it only argument. If all goes well it should return a new
-        python instant of type ``__type__``.        
+        be called with ``obj`` as it only argument. If an :class:`ObjectSchema` was supplied for the class,
+        ``obj`` will first be validated then passed to handler. The handler should return a new python instant
+        of type ``__type__``.        
         """
         if "__type__" not in obj:
             return obj
