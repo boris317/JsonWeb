@@ -286,5 +286,11 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         self.assertEqual(did_run, [True])
         
         person = json.loads(json_str, object_hook=custom_object_hook)        
-        self.assertEqual(did_run, [True, True])    
+        self.assertEqual(did_run, [True, True])
+       
+    def test_invalid_json_raises_JsonDecodeError(self):
+        from jsonweb.decode import loader, JsonDecodeError 
+
+        with self.assertRaises(JsonDecodeError) as c:
+            loader("{'foo':'bar'}")        
     

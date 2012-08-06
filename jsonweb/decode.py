@@ -498,5 +498,8 @@ def loader(json_str, **kw):
         kw.pop("as_type", None),
         kw.pop("validate", True)
     )
-    return json.loads(json_str, **kw)
+    try:
+        return json.loads(json_str, **kw)
+    except ValueError, e:
+        raise JsonDecodeError(e.args[0])
 
