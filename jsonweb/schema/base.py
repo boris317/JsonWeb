@@ -20,7 +20,7 @@ class BaseValidator(object):
             if self.is_nullable():
                 return item
             raise ValidationError("Cannot be null.")
-        return self.validate(item)
+        return self._validate(item)
         
     def _validate(self, item):        
         raise NotImplemented
@@ -44,7 +44,7 @@ class SchemaMeta(type):
 class ObjectSchema(BaseValidator):
     __metaclass__ = SchemaMeta
 
-    def validate(self, obj):
+    def _validate(self, obj):
         val_obj = {}
         errors = {}        
         if not isinstance(obj, dict):

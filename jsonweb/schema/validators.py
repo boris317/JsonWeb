@@ -39,7 +39,7 @@ class List(BaseValidator):
         else:
             self.validator = validator
         
-    def validate(self, item):
+    def _validate(self, item):
         if not isinstance(item, list):
             raise ValidationError("Expected list got %s instead." % self._class_name(item))
         validated_objs = []
@@ -84,7 +84,7 @@ class EnsureType(BaseValidator):
         self.__type_name = type_name or self.__type_name(_type)
         
     
-    def validate(self, item):
+    def _validate(self, item):
         if not isinstance(item, self.__type):
             raise ValidationError("Expected %s got %s instead." % (self.__type_name, self._class_name(item)))
         return item
@@ -131,8 +131,8 @@ class String(EnsureType):
         super(String, self).__init__(basestring, type_name="str", **kw)
         self.max_len = max_len
         
-    def validate(self, item):
-        value = super(String, self).validate(item)
+    def _validate(self, item):
+        value = super(String, self)._validate(item)
         if self.max_len and len(value) > self.max_len:
             raise ValidationError("String exceeds max length of %s." % self.max_len)
         return value
@@ -187,7 +187,7 @@ class DateTime(BaseValidator):
         super(DateTime, self).__init__(**kw)
         self.format = format or "%Y-%m-%d %H:%M:%S"
         
-    def validate(self, item):
+    def _validate(self, item):
         try:
             return datetime.strptime(item, self.format)
         except ValueError, e:
