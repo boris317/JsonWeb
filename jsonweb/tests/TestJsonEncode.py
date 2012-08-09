@@ -100,7 +100,7 @@ class TestJsonEnecode(unittest.TestCase):
         person = Person("shawn", "adams")
         json_obj = json.loads(dumper(person))
         
-        self.assertEqual(json_obj, {"FirstName": "shawn", "LastName": "adams"})        
+        self.assertEqual(json_obj, {"FirstName": "shawn", "LastName": "adams"})
         
     def test_stacked_decorators(self):
         from jsonweb.encode import to_object, dumper
@@ -216,4 +216,21 @@ class TestJsonEnecode(unittest.TestCase):
                 
         person = Person("shawn", None)                 
         json_obj = json.loads(dumper(person, exclude_nulls=False))
-        self.assertTrue("last_name" in json_obj)        
+        self.assertTrue("last_name" in json_obj)
+     
+    def test_supplied_handlers_kw_to_dumper(self):
+        from jsonweb.encode import to_object, dumper
+        
+        def person_handler(obj):
+            return {"FirstName": obj.first_name, "LastName": obj.last_name}
+        
+        @to_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        person = Person("shawn", "adams")
+        json_obj = json.loads(dumper(person, handlers={"Person": person_handler}))
+        
+        self.assertEqual(json_obj, {"FirstName": "shawn", "LastName": "adams"})

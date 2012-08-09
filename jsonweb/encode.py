@@ -192,6 +192,7 @@ class JsonWebEncoder(json.JSONEncoder):
     def __init__(self, **kw):
         self.__hard_suppress = kw.pop("suppress", [])
         self.__exclude_nulls = kw.pop("exclude_nulls", None)
+        self.__handlers = kw.pop("handlers", {})
         if not isinstance(self.__hard_suppress, list):
             self.__hard_suppress = [self.__hard_suppress]
         json.JSONEncoder.__init__(self, **kw)
@@ -203,8 +204,9 @@ class JsonWebEncoder(json.JSONEncoder):
             pass
         else:
             if e_args.serialize_as == "json_object":
-                if e_args.handler:
-                    return e_args.handler(o)
+                handler = self.__handlers.get(e_args.__type__, e_args.handler)
+                if handler:
+                    return handler(o)
                 return self.object_handler(o)
             elif e_args.serialize_as == "json_list":
                 return self.list_handler(o)
@@ -270,6 +272,7 @@ def dumper(obj, **kw):
     JSON encode your class instances by calling this function as you would call 
     :func:`json.dumps`. ``kw`` args will be passed to the underlying json.dumps call.
 
+    :param handlers: A dict of type name/handler callable to use. ie {"Person:" person_handler}
     :param cls: To override the given encoder. Should be a subclass of :class:`JsonWebEncoder`
     :param suppress: A list of extra fields to suppress (as well as those suppressed by the class)
     :param exclude_nulls: Set True to suppress keys with null (None) values from the JSON output. Defaults to False.
