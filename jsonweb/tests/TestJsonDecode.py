@@ -253,6 +253,8 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
         self.assertTrue(isinstance(loader(json_str, as_type="Alien"), Person))
         
+        # This will fail because json_str is not valid for decoding 
+        # into an Alient object.
         json_str = '{"first_name": "shawn", "last_name": "adams"}'        
         with self.assertRaises(ObjectDecodeError):
             loader(json_str, as_type="Alien")
@@ -292,5 +294,27 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         from jsonweb.decode import loader, JsonDecodeError 
 
         with self.assertRaises(JsonDecodeError) as c:
-            loader("{'foo':'bar'}")        
+            loader("{'foo':'bar'}")
     
+    def test_ensure_type_kw_argument(self):
+        from jsonweb.decode import from_object, loader
+        from jsonweb.schema import ValidationError        
+        
+        @from_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
+        self.assertTrue(isinstance(loader(json_str), Person))
+                    
+        @from_object()
+        class Alien(object):
+            def __init__(self, planet, number_of_legs):
+                self.planet = planet
+                self.number_of_legs = number_of_legs
+                
+        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
+        with self.assertRaises(ValidationError):
+            loader(json_str, ensure_type=Alien)

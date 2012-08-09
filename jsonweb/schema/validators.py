@@ -3,7 +3,6 @@ Validators for use in :mod:`jsonweb.schema`.
 """
 from datetime import datetime
 
-from jsonweb.decode import _default_object_handlers
 from jsonweb.exceptions import JsonWebError
 from jsonweb.schema.base import BaseValidator, ValidationError
 
@@ -100,6 +99,8 @@ class EnsureType(BaseValidator):
             return self
         if not isinstance(self.__type, basestring):
             return self
+        
+        from jsonweb.decode import _default_object_handlers        
         #``_type`` was a string and now we must get the actual class
         handler = _default_object_handlers.get(self.__type)
 

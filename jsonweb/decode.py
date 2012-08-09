@@ -35,6 +35,7 @@ import inspect
 import json
 import copy
 from datetime import datetime
+from jsonweb.schema.validators import EnsureType
 from jsonweb.exceptions import JsonWebError
 
 _DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -483,6 +484,8 @@ def loader(json_str, **kw):
     Call this function as you would call :func:`json.loads`. It wraps the :ref:`object_hook` 
     interface and returns python class instances from JSON strings.
     
+    :param ensure_type: Check that the resulting object is of type ``ensure_type``. Raise a ValidationError otherwise.
+    
     :param handlers: is a dict of handlers. see :func:`object_hook`
     
     :param as_type: explicitly specify the type of object the JSON represents. see :func:`object_hook`
@@ -498,8 +501,15 @@ def loader(json_str, **kw):
         kw.pop("as_type", None),
         kw.pop("validate", True)
     )
+    
+    ensure_type = kw.pop("ensure_type", None)
+    
     try:
-        return json.loads(json_str, **kw)
+        obj = json.loads(json_str, **kw)
     except ValueError, e:
         raise JsonDecodeError(e.args[0])
+    
+    if ensure_type:
+        return EnsureType(ensure_type).validate(obj)
+    return obj
 
