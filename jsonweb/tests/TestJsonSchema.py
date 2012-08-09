@@ -269,4 +269,11 @@ class TestEachValidator(unittest.TestCase):
             v.validate("01-01-2012")
             
         exception = context.exception
-        self.assertEqual("time data '01-01-2012' does not match format '%Y-%m-%d %H:%M:%S'", str(exception))        
+        self.assertEqual("time data '01-01-2012' does not match format '%Y-%m-%d %H:%M:%S'", str(exception))  
+  
+    def test_nullable_is_true(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import Integer
+        
+        v = Integer(nullable=True)
+        self.assertEqual(v.validate(None), None)              
