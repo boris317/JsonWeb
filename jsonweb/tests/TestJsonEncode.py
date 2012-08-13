@@ -234,3 +234,21 @@ class TestJsonEnecode(unittest.TestCase):
         json_obj = json.loads(dumper(person, handlers={"Person": person_handler}))
         
         self.assertEqual(json_obj, {"FirstName": "shawn", "LastName": "adams"})
+        
+    def test_handler_decorator(self):
+        from jsonweb import encode
+                
+        @encode.to_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+                
+            @encode.handler   
+            def to_json(self):
+                return {"FirstName": self.first_name, "LastName": self.last_name}                
+                
+        person = Person("shawn", "adams")
+        json_obj = json.loads(encode.dumper(person))
+        
+        self.assertEqual(json_obj, {"FirstName": "shawn", "LastName": "adams"})        

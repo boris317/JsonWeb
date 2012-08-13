@@ -29,6 +29,16 @@ class EncodeArgs:
     handler = None
     suppress = None
 
+def handler(func):
+    """
+    Use :func:`handler` decorator to mark a method on a class as being its
+    jsonweb encode handler. It will be called any time your class is serialized
+    to a JSON string.
+    
+    """
+    func._jsonweb_encode_handler = True
+    return func
+
 def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
     """
     To make your class instances JSON encodable decorate them with :func:`json_object`. 
@@ -120,10 +130,28 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
     def wrapper(cls):
         cls._encode = EncodeArgs()
         cls._encode.serialize_as = "json_object"
+        cls._encode.handler_is_instance_method = False
         cls._encode.handler = handler
         cls._encode.suppress = suppress
         cls._encode.exclude_nulls = exclude_nulls
-        cls._encode.__type__ = cls_type or cls.__name__        
+        cls._encode.__type__ = cls_type or cls.__name__
+        
+        if handler:
+            return cls
+        
+        for attr in dir(cls):
+            if attr.startswith("_"):
+                continue
+            obj = getattr(cls, attr)
+            if hasattr(obj, "_jsonweb_encode_handler"):
+                cls._encode.handler_is_instance_method = True
+                # we store the handler as a string name here. This is 
+                # because obj is an unbound method. When its time to
+                # encode the class instance we want to call the bound
+                # instance method.
+                cls._encode.handler = attr
+                break
+            
         return cls
     
     return wrapper
@@ -204,9 +232,13 @@ class JsonWebEncoder(json.JSONEncoder):
             pass
         else:
             if e_args.serialize_as == "json_object":
-                handler = self.__handlers.get(e_args.__type__, e_args.handler)
-                if handler:
-                    return handler(o)
+                # Passed in handlers take precedence.
+                if e_args.__type__ in self.__handlers:
+                    return self.__handlers[e_args.__type__](o)
+                elif e_args.handler:
+                    if e_args.handler_is_instance_method:
+                        return getattr(o, e_args.handler)()
+                    return e_args.handler(o)
                 return self.object_handler(o)
             elif e_args.serialize_as == "json_list":
                 return self.list_handler(o)
