@@ -1,15 +1,17 @@
 """
-Sometimes it would be nice to have :func:`json.loads` return class instances. For example if you
-do something like this ::
+Sometimes it would be nice to have :func:`json.loads` return class instances.
+For example if you do something like this ::
 
     person = json.loads('{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}')
     
-it would be pretty cool if instead of ``person`` being a :class:`dict` it was an instance of a class we defined called :class:`Person`.
-Luckily the python standard :mod:`json` module provides support for *class hinting* in the form of the ``object_hook`` keyword
-argument accepted by :func:`json.loads`.
+it would be pretty cool if instead of ``person`` being a :class:`dict` it was
+an instance of a class we defined called :class:`Person`. Luckily the python
+standard :mod:`json` module provides support for *class hinting* in the form
+of the ``object_hook`` keyword argument accepted by :func:`json.loads`.
 
-The code in :mod:`jsonweb.decode` uses this ``object_hook`` interface to accomplish the awesomeness you are about to witness.
-Lets turn that ``person`` :class:`dict` into a proper :class:`Person` instance. ::
+The code in :mod:`jsonweb.decode` uses this ``object_hook`` interface to
+accomplish the awesomeness you are about to witness. Lets turn that
+``person`` :class:`dict` into a proper :class:`Person` instance. ::
 
     >>> from jsonweb.decode import from_obj, loader
 
@@ -27,8 +29,9 @@ Lets turn that ``person`` :class:`dict` into a proper :class:`Person` instance. 
     >>> print person.first_name
     "Shawn"
 
-But how was :mod:`jsonweb` able to determine how to instantiate the :class:`Person` class? Take a look 
-at the :func:`from_object` decorator for a detailed explanation.
+But how was :mod:`jsonweb` able to determine how to instantiate the
+:class:`Person` class? Take a look at the :func:`from_object` decorator for a
+detailed explanation.
 """
 
 import inspect
@@ -45,15 +48,18 @@ class JsonDecodeError(JsonWebError):
     Raised for mailformed json.
     """
     def __init__(self, message, error_sub_type=None, **extras):
-        JsonWebError.__init__(self, message, "JSON_PARSE_ERROR", error_sub_type, **extras)
+        JsonWebError.__init__(self, message, "JSON_PARSE_ERROR", 
+                              error_sub_type, **extras)
         
 class ObjectDecodeError(JsonWebError):
     """
     Raisded when python containers (dicts and lists) cannot be decoded into
-    complex types. These exceptions are raised from within an ObjectHook instance.
+    complex types. These exceptions are raised from within an ObjectHook
+    instance.
     """
     def __init__(self, message, error_sub_type, **extras):
-        JsonWebError.__init__(self, message, "DATA_DECODE_ERROR", error_sub_type, **extras)
+        JsonWebError.__init__(self, message, "DATA_DECODE_ERROR", 
+                              error_sub_type, **extras)
 
 class ObjectAttributeError(ObjectDecodeError):
     def __init__(self, obj_type, attr):
@@ -104,8 +110,7 @@ class _ObjectHandlers(object):
         
     def get(self, name):
         """
-        Get a hanlder tuple. Return None if
-        no such handler.
+        Get a hanlder tuple. Return None if no such handler.
         """
         return self.__handlers.get(name)
     
@@ -124,20 +129,23 @@ class _ObjectHandlers(object):
         Modify cls, handler and schema for a decorated class. 
         """
         handler_tuple = self.__handlers[name]
-        self.set(name, self.__merge_tuples((handler, cls, schema), handler_tuple))
+        self.set(name, self.__merge_tuples((handler, cls, schema), 
+                                           handler_tuple))
                  
-    def _update_handler_deferred(self, name, cls=None, handler=None, schema=None):
+    def _update_handler_deferred(self, name, cls=None, 
+                                 handler=None, schema=None):
         """
-        If an entry does not exsist in __handlers an entry will be added 
-        to __deferred_updates instead. Then when add_handler is finally called
-        values will be updated accordingly. Items in __deferred_updates will take
-        precedence over those passed into add_handler.
+        If an entry does not exsist in __handlers an entry will be added to
+        __deferred_updates instead. Then when add_handler is finally called
+        values will be updated accordingly. Items in __deferred_updates will
+        take precedence over those passed into add_handler.
         """
         if name in self.__handlers:
             self.update_handler(name, cls, handler, schema)
             return
         d = self.__deferred_updates.get(name, (None,)*3)
-        self.__deferred_updates[name] = self.__merge_tuples((handler, cls, schema), d)
+        self.__deferred_updates[name] = self.__merge_tuples(
+            (handler, cls, schema), d)
         
     def copy(self):
         handler_copy = _ObjectHandlers()
@@ -164,9 +172,9 @@ class _ObjectHandlers(object):
         
 class ObjectHook(object):
     """
-    This class does most of the work in managing the handlers that decode the json into python
-    class instances. You should not need to  use this class directly. :func:`object_hook` is responsible
-    for instiating and using it.
+    This class does most of the work in managing the handlers that decode the
+    json into python class instances. You should not need to use this class
+    directly. :func:`object_hook` is responsible for instiating and using it.
     """
     _DT_FORMAT = _DATETIME_FORMAT
             
@@ -176,12 +184,14 @@ class ObjectHook(object):
             
     def decode_obj(self, obj):
         """        
-        This method is called for every dict decoded in a json string. The presense
-        of the key ``__type__`` in ``obj`` will trigger a lookup in ``self.handlers``. If a handler is
-        not found for ``__type__`` then an :exc:`ObjectNotFoundError` is raised. If a handler is found it will
-        be called with ``obj`` as it only argument. If an :class:`ObjectSchema` was supplied for the class,
-        ``obj`` will first be validated then passed to handler. The handler should return a new python instant
-        of type ``__type__``.        
+        This method is called for every dict decoded in a json string. The
+        presense of the key ``__type__`` in ``obj`` will trigger a lookup in
+        ``self.handlers``. If a handler is not found for ``__type__`` then an
+        :exc:`ObjectNotFoundError` is raised. If a handler is found it will
+        be called with ``obj`` as it only argument. If an
+        :class:`ObjectSchema` was supplied for the class, ``obj`` will first
+        be validated then passed to handler. The handler should return a new
+        python instant of type ``__type__``.
         """
         if "__type__" not in obj:
             return obj
@@ -205,7 +215,12 @@ class ObjectHook(object):
         try:
             return datetime.strptime(dt, self._DT_FORMAT)
         except TypeError, e:
-            raise ObjectDecodeError("datetime attribute for %s must be a string, not %s" % (self.obj, type(dt)))
+            raise ObjectDecodeError(
+                "datetime attribute for %s must be a string, not %s" %
+                (self.obj, type(dt))
+            )
+            
+            
         except ValueError, e:
             raise ObjectDecodeError(e.args[0])
         
@@ -232,7 +247,8 @@ def get_arg_spec(func):
 def get_jsonweb_handler(cls):
     arg_spec = get_arg_spec(cls.__init__)
     if arg_spec is None:
-        raise JsonWebError("Unable to generate an object_hook handler from %s's `__init__` method." % cls.__name__)
+        raise JsonWebError("Unable to generate an object_hook handler "
+        "from %s's `__init__` method." % cls.__name__)
     args, kw = get_arg_spec(cls.__init__)
 
     return JsonWebObjectHandler(args, kw or None)
@@ -241,11 +257,12 @@ _default_object_handlers = _ObjectHandlers()
 
 def from_object(handler=None, type_name=None, schema=None):
     """
-    Decorating a class with :func:`from_object` will allow :func:`json.loads` to return
-    instances of that class. 
+    Decorating a class with :func:`from_object` will allow :func:`json.loads`
+    to return instances of that class.
     
-    ``handler`` is a callable that should return your class instance. It 
-    receives two arguments, your class and a python dict. Here is an example::
+    ``handler`` is a callable that should return your class instance. It
+    receives two arguments, your class and a python dict. Here is an
+    example::
     
         >>> import json
         >>> from jsonweb.decode import from_object, loader
@@ -270,10 +287,11 @@ def from_object(handler=None, type_name=None, schema=None):
         >>> person.first_name
         'Shawn'
         
-    The ``__type__`` key is very important. Without it :mod:`jsonweb` would not know which
-    handler to delegate the python dict to. By default :func:`from_object` assumes ``__type__``
-    will be the class's ``__name__`` attribute. You can specify your own value by setting
-    the ``type_name`` keyword argument::
+    The ``__type__`` key is very important. Without it :mod:`jsonweb` would
+    not know which handler to delegate the python dict to. By default
+    :func:`from_object` assumes ``__type__`` will be the class's ``__name__``
+    attribute. You can specify your own value by setting the ``type_name``
+    keyword argument::
     
         @from_object(person_decoder, "PersonObject")
         
@@ -289,15 +307,16 @@ def from_object(handler=None, type_name=None, schema=None):
             ...
         ObjectNotFoundError: Cannot decode object Jedi. No such object.
         
-    You may have noticed that ``handler`` is optional. If you do not specify a ``handler`` 
-    :mod:`jsonweb` will attempt to generate one. It will inspect your class's ``__init__``
-    method. Any positional arguments will be considered required while keyword arguments
-    will be optional.
+    You may have noticed that ``handler`` is optional. If you do not specify
+    a ``handler`` :mod:`jsonweb` will attempt to generate one. It will
+    inspect your class's ``__init__`` method. Any positional arguments will
+    be considered required while keyword arguments will be optional.
     
     .. warning::
     
-        A handler cannot be generated from a method signature containing only ``*args`` and ``**kwargs``.
-        The handler would not know which keys to pull out of the python dict.
+        A handler cannot be generated from a method signature containing only
+        ``*args`` and ``**kwargs``. The handler would not know which keys to
+        pull out of the python dict.
     
     Lets look at a few examples::
             
@@ -313,7 +332,11 @@ def from_object(handler=None, type_name=None, schema=None):
         
     What happens if we dont want to specify ``gender``::
             
-        >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
+        >>> person_json = '''{
+        ...     "__type__": "Person", 
+        ...     "first_name": "Shawn", 
+        ...     "last_name": "Adams"
+        ... }'''
         >>> person = loader(person_json)
         Traceback (most recent call last):
             ...        
@@ -357,8 +380,9 @@ def from_object(handler=None, type_name=None, schema=None):
         ...     print e.errors["first_name"].message
         Expected str got int instead.
     
-    Schemas are useful for validating user supplied json in webservices or other web applications.
-    For a detailed explination on using schemas see the :mod:`jsonweb.schema`.
+    Schemas are useful for validating user supplied json in webservices or
+    other web applications. For a detailed explination on using schemas see
+    the :mod:`jsonweb.schema`.
     """
     def wrapper(cls):
         _default_object_handlers.add_handler(
@@ -369,13 +393,13 @@ def from_object(handler=None, type_name=None, schema=None):
 
 def object_hook(handlers=None, as_type=None, validate=True):
     """
-    Wrapper around :class:`ObjectHook`. Calling this function
-    will configure an instance of :class:`ObjectHook` and return
-    a callable suitable for passing to :func:`json.loads` as ``object_hook``.
+    Wrapper around :class:`ObjectHook`. Calling this function will configure
+    an instance of :class:`ObjectHook` and return a callable suitable for
+    passing to :func:`json.loads` as ``object_hook``.
 
-    If you need to decode a JSON string that does not contain a ``__type__`` key 
-    and you know that the JSON represents a certain object or list of objects you 
-    can use ``as_type`` to specify it ::
+    If you need to decode a JSON string that does not contain a ``__type__``
+    key and you know that the JSON represents a certain object or list of
+    objects you can use ``as_type`` to specify it ::
     
         >>> json_str = '{"first_name": "bob", "last_name": "smith"}'
         >>> loader(json_str, as_type="Person")
@@ -390,15 +414,16 @@ def object_hook(handlers=None, as_type=None, validate=True):
         
     .. warning::
     
-        ``as_type`` assumes EVERY object WITHOUT ``__type__`` is of the type specified. So nested dicts
-        could break object decoding.
+        ``as_type`` assumes EVERY object WITHOUT ``__type__`` is of the type
+        specified. So nested dicts could break object decoding.
          
     ``handlers`` is a dict with this format::
     
         {"Person": {"cls": Person, "handler": person_decoder, "schema": PersonSchema)}
         
-    If you do not wish to decorate your classes with :func:`from_object` you can specify the same
-    parameters via the ``handlers`` keyword argument. Here is an exmaple::
+    If you do not wish to decorate your classes with :func:`from_object` you
+    can specify the same parameters via the ``handlers`` keyword argument.
+    Here is an exmaple::
         
         >>> class Person(object):
         ...    def __init__(self, first_name, last_name):
@@ -415,9 +440,10 @@ def object_hook(handlers=None, as_type=None, validate=True):
         
     .. note:: 
     
-        If you decorate a class with :func:`from_object` you can override the ``handler`` and ``schema`` values
-        later. Here is an example of overriding a schema you defined with :func:`from_object` (some code is
-        left out for brevity)::
+        If you decorate a class with :func:`from_object` you can override the
+        ``handler`` and ``schema`` values later. Here is an example of
+        overriding a schema you defined with :func:`from_object` (some code
+        is left out for brevity)::
         
             >>> @from_object(schema=PersonSchema)
             >>> class Person(object):
@@ -427,8 +453,9 @@ def object_hook(handlers=None, as_type=None, validate=True):
             >>> handlers = {"Person": {"schema": NewPersonSchema}}
             >>> person = loader(json_str, handlers=handlers)
             
-    If you need to use ``as_type`` or ``handlers`` many times in your code you can forgo using :func:`loader` in
-    favor of configuring a "custom" object hook callable. Here is an example ::
+    If you need to use ``as_type`` or ``handlers`` many times in your code
+    you can forgo using :func:`loader` in favor of configuring a "custom"
+    object hook callable. Here is an example ::
                 
         >>> my_obj_hook = object_hook(handlers)
         >>> # this call uses custom handlers
@@ -458,18 +485,23 @@ def object_hook(handlers=None, as_type=None, validate=True):
 
 def loader(json_str, **kw):
     """
-    Call this function as you would call :func:`json.loads`. It wraps the :ref:`object_hook` 
-    interface and returns python class instances from JSON strings.
+    Call this function as you would call :func:`json.loads`. It wraps the
+    :ref:`object_hook` interface and returns python class instances from JSON
+    strings.
     
-    :param ensure_type: Check that the resulting object is of type ``ensure_type``. Raise a ValidationError otherwise.
+    :param ensure_type: Check that the resulting object is of type
+    ``ensure_type``. Raise a ValidationError otherwise.
     
     :param handlers: is a dict of handlers. see :func:`object_hook`
     
-    :param as_type: explicitly specify the type of object the JSON represents. see :func:`object_hook`
+    :param as_type: explicitly specify the type of object the JSON
+    represents. see :func:`object_hook`
     
-    :param validate: Set to False to turn off validation (ie dont run the schemas) during this load operation. Defaults to True.
+    :param validate: Set to False to turn off validation (ie dont run the
+    schemas) during this load operation. Defaults to True.
             
-    :param kw: the rest of the kw args will be passed to the underlying :func:`json.loads` calls.
+    :param kw: the rest of the kw args will be passed to the underlying
+    :func:`json.loads` calls.
     
                 
     """

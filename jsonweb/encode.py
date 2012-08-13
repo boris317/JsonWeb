@@ -1,7 +1,8 @@
 """
-Often times in a web application the data you wish to return to users is described by some sort
-of data model or resource in the form of a class object. This module provides an easy way to encode
-your python class instances to JSON. Here is a quick example::
+Often times in a web application the data you wish to return to users is
+described by some sort of data model or resource in the form of a class
+object. This module provides an easy way to encode your python class
+instances to JSON. Here is a quick example::
  
     >>> from jsonweb.encode import to_object, dumper
     
@@ -15,8 +16,9 @@ your python class instances to JSON. Here is a quick example::
     >>> dumper(data)
     '{"__type__": "DataModel", "id": 5, "value": "foo"}'
 
-If you have a class you wish to serialize to a JSON object decorate it with :func:`to_object`. 
-If your class should serialize into a JSON list decorate it with :func:`to_list`.
+If you have a class you wish to serialize to a JSON object decorate it with
+:func:`to_object`. If your class should serialize into a JSON list decorate
+it with :func:`to_list`.
 """
 
 import json
@@ -31,10 +33,10 @@ class EncodeArgs:
 
 def handler(func):
     """
-    Use this decorator to mark a method on a class as being its
-    jsonweb encode handler. It will be called any time your class is serialized
-    to a JSON string. ::
-                   
+    Use this decorator to mark a method on a class as being its jsonweb
+    encode handler. It will be called any time your class is serialized to a
+    JSON string. ::
+
         >>> from jsonweb import encode           
         >>> @encode.to_object()
         ... class Person(object):
@@ -43,7 +45,8 @@ def handler(func):
         ...         self.last_name = last_name
         ...     @encode.handler
         ...     def to_obj(self):
-        ...         return {"FirstName": person.first_name, "LastName": person.last_name}
+        ...         return {"FirstName": person.first_name, 
+        ...             "LastName": person.last_name}
         
         >>> @encode.to_list()
         ... class People(object):
@@ -74,7 +77,7 @@ def handler(func):
             "LastName": "Kenobi"
           }
         ]
-        
+
     """
     func._jsonweb_encode_handler = True
     return func
@@ -99,9 +102,10 @@ def __inspect_for_handler(cls):
 
 def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
     """
-    To make your class instances JSON encodable decorate them with :func:`json_object`. 
-    The class instance's ``__dict__`` attribute will be used to retrieve the key/value pairs that will 
-    make up the JSON object (*Minus any attributes that start with an underscore or any attributes 
+    To make your class instances JSON encodable decorate them with
+    :func:`json_object`. The class instance's ``__dict__`` attribute will be
+    used to retrieve the key/value pairs that will make up the JSON object
+    (*Minus any attributes that start with an underscore or any attributes
     that were specified via the* ``suppress`` *keyword agrument*).
     
     Here is an example::
@@ -116,9 +120,10 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
         >>> dumper(person)
         '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
     
-    A ``__type__`` key is automatically added to the JSON object.  Its value should represent
-    the object type being encoded. By default it is set to the value of the decorated class's 
-    ``__name__`` attribute. You can specify your own value with ``cls_type``::
+    A ``__type__`` key is automatically added to the JSON object. Its value
+    should represent the object type being encoded. By default it is set to
+    the value of the decorated class's ``__name__`` attribute. You can
+    specify your own value with ``cls_type``::
                         
         >>> @to_object(cls_type="PersonObject")
         ... class Person(object):
@@ -130,8 +135,9 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
         >>> dumper(person)
         '{"__type__": "PersonObject", "first_name": "Shawn", "last_name": "Adams"}'
                   
-    If you would like to leave some attributes out of the resulting JSON simply
-    use the ``suppress`` kw argument to pass a list of attribute names::
+    If you would like to leave some attributes out of the resulting JSON
+    simply use the ``suppress`` kw argument to pass a list of attribute
+    names::
            
         >>> @to_object(suppress=["last_name"])
         ... class Person(object):
@@ -148,8 +154,8 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
         @to_object(suppress=["last_name", "__type__"])
         ...
         
-    Sometimes it's useful to suppress ``None`` values from your JSON output. Setting ``exclude_nulls`` to 
-    ``True`` will accomplish this ::
+    Sometimes it's useful to suppress ``None`` values from your JSON output.
+    Setting ``exclude_nulls`` to ``True`` will accomplish this ::
     
         >>> @to_object(exclude_nulls=True)
         ... class Person(object):
@@ -161,17 +167,20 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
         >>> dumper(person)
         '{"__type__": "Person", "first_name": "Shawn"}'
     
-    You can also pass ``exclude_nulls`` to :func:`dumper`. It takes precedence over what you passed to
-    :func:`to_object` and only effects that one call.
+    You can also pass ``exclude_nulls`` to :func:`dumper`. It takes
+    precedence over what you passed to :func:`to_object` and only effects
+    that one call.
     
-    If you need greater control over how your object is encoded you can specify a ``handler`` callable.
-    It should accept one argument, which is the object to encode, and it should return
-    a dict. This would overide the default object handler :func:`JsonWebEncoder.object_handler`.
+    If you need greater control over how your object is encoded you can
+    specify a ``handler`` callable. It should accept one argument, which is
+    the object to encode, and it should return a dict. This would overide the
+    default object handler :func:`JsonWebEncoder.object_handler`.
     
     Here is an example::
         
         >>> def person_encoder(person):
-        ...     return {"FirstName": person.first_name, "LastName": person.last_name}
+        ...     return {"FirstName": person.first_name, 
+        ...         "LastName": person.last_name}
             
         >>> @to_object(handler=person_encoder)
         ... class Person(object):
@@ -185,7 +194,8 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
         '{"FirstName": "Shawn", "LastName": "Adams"}'
         
         
-    You can also use the alternate decorator syntax to accomplish this. See :func:`jsonweb.encode.handler`.
+    You can also use the alternate decorator syntax to accomplish this. See
+    :func:`jsonweb.encode.handler`.
             
     """
     def wrapper(cls):
@@ -200,9 +210,10 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
     
 def to_list(handler=None):
     """
-    If your class instances should serialize into a JSON list decorate it with :func:`to_list`. By
-    default  The python built in :class:`list` will be called with your class instance as its 
-    argument. ie **list(obj)**. This means your class needs to define the ``__iter__`` method.
+    If your class instances should serialize into a JSON list decorate it
+    with :func:`to_list`. By default The python built in :class:`list` will
+    be called with your class instance as its argument. ie **list(obj)**.
+    This means your class needs to define the ``__iter__`` method.
     
     Here is an example::
         
@@ -235,11 +246,10 @@ def to_list(handler=None):
             {"first_name": "Obi-Wan", "last_name": "Kenobi"}
         ]    
     
-    .. versionadded:: 0.6.0
-       You can now specify a custom hanlder callable with the ``handler`` kw argument.
-       It should accept one argument, your class instance. You can also use the 
-       :func:`jsonweb.encode.handler` decorator to mark one of the class's methods
-       as the list hanlder.
+    .. versionadded:: 0.6.0 You can now specify a custom hanlder callable
+       with the ``handler`` kw argument. It should accept one argument, your
+       class instance. You can also use the :func:`jsonweb.encode.handler`
+       decorator to mark one of the class's methods as the list hanlder.
             
     """
     def wrapper(cls):
@@ -252,16 +262,17 @@ def to_list(handler=None):
 
 class JsonWebEncoder(json.JSONEncoder):
     """
-    This :class:`json.JSONEncoder` subclass is responsible for encoding instances of 
-    classess that have been decorated with :func:`to_object` or :func:`to_list`. Pass 
-    :class:`JsonWebEncoder` as the value for the ``cls`` keyword agrument to
-    :func:`json.dump` or :func:`json.dumps`.
+    This :class:`json.JSONEncoder` subclass is responsible for encoding
+    instances of classess that have been decorated with :func:`to_object` or
+    :func:`to_list`. Pass :class:`JsonWebEncoder` as the value for the
+    ``cls`` keyword agrument to :func:`json.dump` or :func:`json.dumps`.
     
     Example::
     
         json.dumps(obj_instance, cls=JsonWebEncoder)
     
-    Using :func:`dumper` is a shortcut for the above call to :func:`json.dumps` ::
+    Using :func:`dumper` is a shortcut for the above call to
+    :func:`json.dumps` ::
     
         dumper(obj_instance) #much nicer!
                 
@@ -303,17 +314,19 @@ class JsonWebEncoder(json.JSONEncoder):
     
     def object_handler(self, obj):
         """
-        Handles encoding instance objects of classes decorated by :func:`to_object`. Returns
-        a dict containing all the key/value pairs in ``obj.__dict__``. Excluding attributes that 
+        Handles encoding instance objects of classes decorated by
+        :func:`to_object`. Returns a dict containing all the key/value pairs
+        in ``obj.__dict__``. Excluding attributes that
         
         * start with an underscore.
-        * were specified with the ``suppress`` keyword agrument of :func:`to_object`.
+        * were specified with the ``suppress`` keyword agrument.
         
         The returned dict will be encoded into JSON.
         
         .. note::
         
-            Override this method if you wish to change how ALL objects are encoded into JSON objects.
+            Override this method if you wish to change how ALL objects are
+            encoded into JSON objects.
             
         """
         suppress = obj._encode.suppress
@@ -340,25 +353,34 @@ class JsonWebEncoder(json.JSONEncoder):
         
     def list_handler(self, obj):
         """
-        Handles encoding instance objects of classes decorated by :func:`to_list`. Simply calls
-        :class:`list` on ``obj``.
+        Handles encoding instance objects of classes decorated by
+        :func:`to_list`. Simply calls :class:`list` on ``obj``.
         
         .. note::
         
-            Override this method if you wish to change how ALL objects are encoded into JSON lists.        
+            Override this method if you wish to change how ALL objects are
+            encoded into JSON lists.
                 
         """        
         return list(obj)
     
 def dumper(obj, **kw):
     """
-    JSON encode your class instances by calling this function as you would call 
-    :func:`json.dumps`. ``kw`` args will be passed to the underlying json.dumps call.
+    JSON encode your class instances by calling this function as you would
+    call :func:`json.dumps`. ``kw`` args will be passed to the underlying
+    json.dumps call.
 
-    :param handlers: A dict of type name/handler callable to use. ie {"Person:" person_handler}
-    :param cls: To override the given encoder. Should be a subclass of :class:`JsonWebEncoder`
-    :param suppress: A list of extra fields to suppress (as well as those suppressed by the class)
-    :param exclude_nulls: Set True to suppress keys with null (None) values from the JSON output. Defaults to False.
+    :param handlers: A dict of type name/handler callable to use. 
+     ie {"Person:" person_handler}
+     
+    :param cls: To override the given encoder. Should be a subclass 
+     of :class:`JsonWebEncoder`.
+     
+    :param suppress: A list of extra fields to suppress (as well as those
+     suppressed by the class).
+     
+    :param exclude_nulls: Set True to suppress keys with null (None) values
+     from the JSON output. Defaults to False.
     """
     return json.dumps(obj, cls=kw.pop("cls", JsonWebEncoder), **kw)
 
