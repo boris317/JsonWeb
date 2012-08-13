@@ -72,29 +72,6 @@ class ObjectNotFoundError(ObjectDecodeError):
             obj_type=obj_type,
         )
 
-def json_request(func):
-    """
-    Decorate pyramid view callables that require a decoded json request.  If the request
-    content_type is application/json it will attempt to decode the string in request.body
-    as JSON. The python data structure will be set on the request obj as "decoded_obj"
-    Raises BadRequestError otherwise.
-    """
-    def wrapper(request):
-        if not request.content_type == "application/json":
-            raise BadRequestError("Missing JSON data")
-        
-        try:
-            obj = json.load(request.body_file, object_hook=object_hook)
-        except ValueError, e:
-            raise JsonDecodeError(e.args[0])
-        request.decoded_obj = obj
-        
-        return func(request)
-    
-    wrapper.__name__ = func.__name__
-    wrapper.__doc__ = func.__doc__
-    return wrapper
-
 class JsonWebObjectHandler(object):
     def __init__(self, args, kw_args=None):
         self.args = args
