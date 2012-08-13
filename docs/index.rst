@@ -21,7 +21,6 @@ documentation in order. As each section builds a little bit on the last.
    decode
    schema
 
-
 Indices and tables
 ------------------
 

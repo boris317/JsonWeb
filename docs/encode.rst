@@ -12,6 +12,7 @@ Decorators
 
 .. autofunction:: to_object
 .. autofunction:: to_list
+.. autofunction:: handler
 
 JsonWebEncoder
 --------------
