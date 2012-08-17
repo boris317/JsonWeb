@@ -4,8 +4,9 @@ from jsonweb import encode
 @encode.to_object()
 class ValidationError(JsonWebError):
     def __init__(self, message, errors=None):
-        JsonWebError.__init__(self, message, "VALIDATION_ERROR")
+        JsonWebError.__init__(self, message)
         self.errors = errors
+        
     @encode.handler
     def to_json(self):
         error = {"message": self.message}

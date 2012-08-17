@@ -47,9 +47,8 @@ class JsonDecodeError(JsonWebError):
     """
     Raised for mailformed json.
     """
-    def __init__(self, message, error_sub_type=None, **extras):
-        JsonWebError.__init__(self, message, "JSON_PARSE_ERROR", 
-                              error_sub_type, **extras)
+    def __init__(self, message, **extras):
+        JsonWebError.__init__(self, message, **extras)
         
 class ObjectDecodeError(JsonWebError):
     """
@@ -57,15 +56,13 @@ class ObjectDecodeError(JsonWebError):
     complex types. These exceptions are raised from within an ObjectHook
     instance.
     """
-    def __init__(self, message, error_sub_type, **extras):
-        JsonWebError.__init__(self, message, "DATA_DECODE_ERROR", 
-                              error_sub_type, **extras)
+    def __init__(self, message, **extras):
+        JsonWebError.__init__(self, message, **extras)
 
 class ObjectAttributeError(ObjectDecodeError):
     def __init__(self, obj_type, attr):
         ObjectDecodeError.__init__(self, 
             "Missing %s attribute for %s." % (attr, obj_type), 
-            "MISSING_ATTRIBUTE",
             obj_type=obj_type, 
             attribute=attr
         )
@@ -74,7 +71,6 @@ class ObjectNotFoundError(ObjectDecodeError):
     def __init__(self, obj_type):
         ObjectDecodeError.__init__(self, 
             "Cannot decode object %s. No such object." % obj_type, 
-            "OBJECT_NOT_FOUND",
             obj_type=obj_type,
         )
 
