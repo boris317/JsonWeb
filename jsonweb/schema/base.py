@@ -1,10 +1,18 @@
 from jsonweb.exceptions import JsonWebError
+from jsonweb import encode
 
+@encode.to_object()
 class ValidationError(JsonWebError):
     def __init__(self, message, errors=None):
         JsonWebError.__init__(self, message, "VALIDATION_ERROR")
         self.errors = errors
-        
+    @encode.handler
+    def to_json(self):
+        error = {"message": self.message}
+        if self.errors:
+            error["errors"] = self.errors
+        return error
+            
 class BaseValidator(object):
     def __init__(self, optional=False, nullable=False):
         self.__required = (not optional)
