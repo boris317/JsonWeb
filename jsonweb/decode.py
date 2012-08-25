@@ -408,10 +408,10 @@ def object_hook(handlers=None, as_type=None, validate=True):
         >>> loader(json_str, as_type="Person")
         [<Person object at 0x1007d7550>, <Person object at 0x1007d7434>]
         
-    .. warning::
+    .. note::
     
-        ``as_type`` assumes EVERY object WITHOUT ``__type__`` is of the type
-        specified. So nested dicts could break object decoding.
+        Assumes every object WITHOUT a ``__type__``  kw is of 
+        the type specified by ``as_type`` .
          
     ``handlers`` is a dict with this format::
     
