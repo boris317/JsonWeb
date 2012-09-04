@@ -22,4 +22,4 @@ Object hook
    
 ``as_type`` context mananger
 -----------------------------
-.. autofunction:: decode_as_type
+.. autofunction:: ensure_type 
