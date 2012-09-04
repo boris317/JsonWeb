@@ -318,3 +318,38 @@ class TestJsonWebObjectDecoder(unittest.TestCase):
         json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
         with self.assertRaises(ValidationError):
             loader(json_str, ensure_type=Alien)
+            
+    def test_decode_as_type(self):
+        from jsonweb import decode
+        from jsonweb.schema import ValidationError
+        
+        @decode.from_object()
+        class Person(object):
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+                
+        @decode.from_object()
+        class Job(object):
+            def __init__(self, title):
+                self.title = title
+                
+        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'
+        
+        self.assertEqual(decode._as_type_context.top, None)
+        
+        with decode.ensure_type(Person):
+            self.assertEqual(decode._as_type_context.top, Person)
+            person = decode.loader(json_str)
+            
+            # Test nested context
+            with decode.ensure_type(Job):
+                self.assertEqual(decode._as_type_context.top, Job)                
+                with self.assertRaises(ValidationError):
+                    job = decode.loader(json_str)
+                    
+            self.assertEqual(decode._as_type_context.top, Person)
+        
+
+        self.assertEqual(decode._as_type_context.top, None)        
+        

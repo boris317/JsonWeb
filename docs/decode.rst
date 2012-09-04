@@ -19,3 +19,7 @@ Object hook
 .. autofunction:: object_hook
 .. autoclass:: ObjectHook
    :members: decode_obj
+   
+``as_type`` context mananger
+-----------------------------
+.. autofunction:: decode_as_type

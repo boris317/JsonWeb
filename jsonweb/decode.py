@@ -37,11 +37,17 @@ detailed explanation.
 import inspect
 import json
 import copy
+from contextlib import contextmanager
 from datetime import datetime
+
 from jsonweb.schema.validators import EnsureType
 from jsonweb.exceptions import JsonWebError
+from jsonweb._local import LocalStack
 
 _DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+# Thread local object stack used by :func:`decode_as_type`
+_as_type_context = LocalStack()
 
 class JsonDecodeError(JsonWebError):
     """
@@ -486,20 +492,16 @@ def loader(json_str, **kw):
     strings.
     
     :param ensure_type: Check that the resulting object is of type
-    ``ensure_type``. Raise a ValidationError otherwise.
-    
-    :param handlers: is a dict of handlers. see :func:`object_hook`
-    
+        ``ensure_type``. Raise a ValidationError otherwise.          
+    :param handlers: is a dict of handlers. see :func:`object_hook`.    
     :param as_type: explicitly specify the type of object the JSON
-    represents. see :func:`object_hook`
-    
+        represents. see :func:`object_hook`    
     :param validate: Set to False to turn off validation (ie dont run the
-    schemas) during this load operation. Defaults to True.
-            
+        schemas) during this load operation. Defaults to True.    
     :param kw: the rest of the kw args will be passed to the underlying
-    :func:`json.loads` calls.
+        :func:`json.loads` calls.
     
-                
+    
     """
     kw["object_hook"] = object_hook(
         kw.pop("handlers", None),
@@ -507,7 +509,7 @@ def loader(json_str, **kw):
         kw.pop("validate", True)
     )
     
-    ensure_type = kw.pop("ensure_type", None)
+    ensure_type = kw.pop("ensure_type", _as_type_context.top)
     
     try:
         obj = json.loads(json_str, **kw)
@@ -518,3 +520,63 @@ def loader(json_str, **kw):
         return EnsureType(ensure_type).validate(obj)
     return obj
 
+@contextmanager
+def ensure_type(cls):
+    """
+    This context manager lets you "inject" a value for ``ensure_type`` into
+    :func:`loader` calls made in the active context. This will allow a
+    :class:`~jsonweb.schema.ValidationError` to bubble up from the underlying
+    :func:`loader` call if the resultant type is not of type ``ensure_type``.
+    
+    Here is an example ::
+            
+        # example_app.model.py
+        from jsonweb.decode import from_object
+        # import db model stuff
+        from example_app import db
+        
+        @from_object()
+        class Person(db.Base):
+            first_name = db.Column(String)
+            last_name = db.Column(String)
+            
+            def __init__(self, first_name, last_name):
+                self.first_name = first_name
+                self.last_name = last_name
+
+                
+        # example_app.__init__.py
+        from example_app.model import session, Person
+        from jsonweb.decode import from_object, ensure_type
+        from jsonweb.schema import ValidationError
+        from flask import Flask, request, abort
+
+        app.errorhandler(ValidationError)
+        def json_validation_error(e):
+            return json_response({"error": e})
+            
+            
+        def load_request_json():
+            if request.headers.get('content-type') == 'application/json':
+                return loader(request.data)
+            abort(400)
+            
+            
+        @app.route("/person", methods=["POST", "PUT"])
+        def add_person():
+            with ensure_type(Person):
+                person = load_request_json()
+            session.add(person)
+            session.commit()
+            return "ok"
+            
+        
+    The above example is pretty contrived. We could have just made ``load_json_request``
+    accept an ``ensure_type`` kw, but imagine if the call to :func:`loader` was burried 
+    deeper in our api and such a thing was not possible.
+    """
+    _as_type_context.push(cls)
+    try:
+        yield None
+    finally:
+        _as_type_context.pop()
