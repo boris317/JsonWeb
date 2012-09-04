@@ -3,7 +3,7 @@ JsonWeb
 
 Add JSON (de)serialization to your python objects ::
 
-    >> from jsonweb import decode, encode
+    >>> from jsonweb import decode, encode
     
     >>> @encode.to_object()
     ... @decode.from_object()
