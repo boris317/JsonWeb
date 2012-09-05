@@ -1,6 +1,10 @@
 from jsonweb.exceptions import JsonWebError
 from jsonweb import encode
 
+def update_dict(d, **kw):
+    d.update(kw)
+    return d
+
 @encode.to_object()
 class ValidationError(JsonWebError):
     def __init__(self, message, errors=None):
@@ -13,7 +17,8 @@ class ValidationError(JsonWebError):
         if self.errors:
             error["errors"] = self.errors
         return error
-            
+
+@encode.to_object()
 class BaseValidator(object):
     def __init__(self, optional=False, nullable=False):
         self.__required = (not optional)
@@ -30,7 +35,16 @@ class BaseValidator(object):
                 return item
             raise ValidationError("Cannot be null.")
         return self._validate(item)
-        
+    
+    @encode.handler
+    def to_json(self, **kw):
+        obj = {
+            "required": self.is_required(),
+            "nullable": self.is_nullable()
+        }
+        obj.update(kw)
+        return obj
+    
     def _validate(self, item):        
         raise NotImplemented
     
@@ -49,10 +63,16 @@ class SchemaMeta(type):
                 fields.append(k)
         class_dict["_fields"] = fields
         return type.__new__(meta, class_name, bases, class_dict)    
-    
+
+
 class ObjectSchema(BaseValidator):
     __metaclass__ = SchemaMeta
 
+    def to_json(self):
+        return super(ObjectSchema, self).to_json(
+            fields=dict([(f, getattr(self, f)) for f in self._fields])
+        )
+    
     def _validate(self, obj):
         val_obj = {}
         errors = {}        

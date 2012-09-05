@@ -57,6 +57,9 @@ class List(BaseValidator):
         if errors:
             raise ValidationError("Error validating list.", errors=errors)
         return validated_objs
+    
+    def to_json(self):
+        return super(List, self).to_json()
      
 class EnsureType(BaseValidator):
     """
@@ -107,8 +110,12 @@ class EnsureType(BaseValidator):
         if not handler:
             raise JsonWebError("Cannot find class %s." % self.__type)
         return EnsureType(handler[1])
-        
-        
+    
+    def to_json(self, **kw):
+        return super(EnsureType, self).to_json(
+            type=self.__type_name, **kw
+        )
+                        
 class String(EnsureType):
     """
     Validates something is a string ::
@@ -193,4 +200,9 @@ class DateTime(BaseValidator):
             return datetime.strptime(item, self.format)
         except ValueError, e:
             raise ValidationError(str(e))
-    
+        
+    def to_json(self):
+        return super(DateTime, self).to_json(
+            type="DateTime",
+            format=self.format
+        )
