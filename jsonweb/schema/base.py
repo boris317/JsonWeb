@@ -13,10 +13,9 @@ class ValidationError(JsonWebError):
         
     @encode.handler
     def to_json(self):
-        error = {"message": self.message}
         if self.errors:
-            error["errors"] = self.errors
-        return error
+            return {"message": self.message, "errors": self.errors}
+        return self.message
 
 @encode.to_object()
 class BaseValidator(object):
@@ -77,7 +76,7 @@ class ObjectSchema(BaseValidator):
         val_obj = {}
         errors = {}        
         if not isinstance(obj, dict):
-            raise ValidationError("Expected dict got %s instead" % (self._class_name(obj)))
+            raise ValidationError("Expected dict got %s instead." % (self._class_name(obj)))
         for field in self._fields:
             v = getattr(self, field)
             try:
@@ -88,7 +87,7 @@ class ObjectSchema(BaseValidator):
             except ValidationError, e:
                     errors[field] = e
         if errors:
-            raise ValidationError("Error validating object", errors)
+            raise ValidationError("Error validating object.", errors)
         return val_obj
     
 def bind_schema(type_name, schema_obj):
