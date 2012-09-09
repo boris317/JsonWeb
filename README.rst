@@ -20,5 +20,9 @@ Add JSON (de)serialization to your python objects ::
     >>> print user.nick
     cool_user123
     
+.. note ::
+
+    JsonWeb is still very much under development. Things will change.
 
 See  `documentation <http://readthedocs.org/docs/jsonweb/en/latest/>`_
+
