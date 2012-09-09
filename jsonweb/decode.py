@@ -46,7 +46,7 @@ from jsonweb._local import LocalStack
 
 _DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
-# Thread local object stack used by :func:`decode_as_type`
+# Thread local object stack used by :func:`ensure_type`
 _as_type_context = LocalStack()
 
 class JsonDecodeError(JsonWebError):
