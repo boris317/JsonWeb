@@ -1,9 +1,11 @@
 from jsonweb.exceptions import JsonWebError
 from jsonweb import encode
 
+
 def update_dict(d, **kw):
     d.update(kw)
     return d
+
 
 @encode.to_object()
 class ValidationError(JsonWebError):
@@ -16,6 +18,7 @@ class ValidationError(JsonWebError):
         if self.errors:
             return {"message": self.message, "errors": self.errors}
         return self.message
+
 
 @encode.to_object()
 class BaseValidator(object):
@@ -50,9 +53,6 @@ class BaseValidator(object):
     def _class_name(self, obj):
         return obj.__class__.__name__
     
-"""
-Complex validators
-"""
 
 class SchemaMeta(type):
     def __new__(meta, class_name, bases, class_dict):
@@ -76,7 +76,9 @@ class ObjectSchema(BaseValidator):
         val_obj = {}
         errors = {}        
         if not isinstance(obj, dict):
-            raise ValidationError("Expected dict got %s instead." % (self._class_name(obj)))
+            raise ValidationError(
+                "Expected dict got %s instead." % (self._class_name(obj))
+            )
         for field in self._fields:
             v = getattr(self, field)
             try:
@@ -89,11 +91,13 @@ class ObjectSchema(BaseValidator):
         if errors:
             raise ValidationError("Error validating object.", errors)
         return val_obj
-    
+
+
 def bind_schema(type_name, schema_obj):
     from jsonweb.decode import _default_object_handlers
     """
     Use this function to add an :class:`ObjectSchema` to a class already
     decorated by :func:`from_object`.
     """
-    _default_object_handlers._update_handler_deferred(type_name, schema=schema_obj)
+    _default_object_handlers._update_handler_deferred(type_name, 
+                                                      schema=schema_obj)
