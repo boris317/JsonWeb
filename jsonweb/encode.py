@@ -167,9 +167,11 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
         >>> dumper(person)
         '{"__type__": "Person", "first_name": "Shawn"}'
     
-    You can also pass ``exclude_nulls`` to :func:`dumper`. It takes
-    precedence over what you passed to :func:`to_object` and only effects
-    that one call.
+    .. note:: 
+    
+        You can also pass most of these arguments to :func:`dumper`. They
+        will take precedence over what you passed to :func:`to_object` and
+        only effects that one call.
     
     If you need greater control over how your object is encoded you can
     specify a ``handler`` callable. It should accept one argument, which is
