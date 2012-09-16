@@ -1,7 +1,9 @@
+.. highlight:: python
+
 JsonWeb
 ========
 
-Add JSON (de)serialization to your python objects ::
+Add JSON (de)serialization to your python objects
 
     >>> from jsonweb import decode, encode
     
