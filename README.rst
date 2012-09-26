@@ -19,6 +19,8 @@ Add JSON (de)serialization to your python objects ::
     >>> user = decode.loader(json_str)
     >>> print user.nick
     cool_user123
+    >>> print user
+    <User object at 0x10145e390>
     
 .. note ::
 
