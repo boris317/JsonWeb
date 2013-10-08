@@ -160,6 +160,11 @@ class Float(EnsureType):
     def __init__(self, **kw):
         super(Float, self).__init__(float, **kw)
 
+class Boolean(EnsureType):
+    """ Validates something is a Boolean """
+    def __init__(self, **kw):
+        super(Boolean, self).__init__(bool, **kw)
+
 class Number(EnsureType):
     """
     Validates something is a number ::

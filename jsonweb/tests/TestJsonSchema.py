@@ -149,11 +149,11 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(exc.errors["id"].message, "Expected Foo got int instead.")
 
     def test_ensuretype_kw_arguments_stick_around(self):
-        from jsonweb.schema import ObjectSchema, validators as v
-        from jsonweb import from_object
         """
         Tests bug fix for: http://github.com/boris317/JsonWeb/issues/7
         """
+        from jsonweb.schema import ObjectSchema, validators as v
+        from jsonweb import from_object
 
         class FooSchema(ObjectSchema):
             bar = v.EnsureType("Bar", optional=True, nullable=True)
@@ -189,8 +189,7 @@ class TestEachValidator(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             v.validate(1)
 
-        exception = context.exception
-        self.assertEqual("Expected str got int instead.", str(exception))
+        self.assertEqual("Expected str got int instead.", str(context.exception))
 
     def test_string_validator_max_len_kw(self):
         from jsonweb.schema import ValidationError
@@ -201,8 +200,7 @@ class TestEachValidator(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             v.validate("foobar")
 
-        exception = context.exception
-        self.assertEqual("String exceeds max length of 3.", str(exception))
+        self.assertEqual("String exceeds max length of 3.", str(context.exception))
 
     def test_integer_validator(self):
         from jsonweb.schema import ValidationError
@@ -213,8 +211,7 @@ class TestEachValidator(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             v.validate("foo")
 
-        exception = context.exception
-        self.assertEqual("Expected int got str instead.", str(exception))
+        self.assertEqual("Expected int got str instead.", str(context.exception))
 
     def test_float_validator(self):
         from jsonweb.schema import ValidationError
@@ -225,8 +222,18 @@ class TestEachValidator(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             v.validate(42)
 
-        exception = context.exception
-        self.assertEqual("Expected float got int instead.", str(exception))
+        self.assertEqual("Expected float got int instead.", str(context.exception))
+
+    def test_boolean_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import Boolean
+
+        v = Boolean()
+        self.assertEqual(v.validate(True), True)
+        with self.assertRaises(ValidationError) as context:
+            v.validate("5")
+
+        self.assertEqual("Expected bool got str instead.", str(context.exception))
 
     def test_number_validator(self):
         from jsonweb.schema import ValidationError
@@ -238,8 +245,7 @@ class TestEachValidator(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             v.validate("foo")
 
-        exception = context.exception
-        self.assertEqual("Expected number got str instead.", str(exception))
+        self.assertEqual("Expected number got str instead.", str(context.exception))
 
     def test_list_validator(self):
         from jsonweb.schema import ValidationError
@@ -251,8 +257,7 @@ class TestEachValidator(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             v.validate("foo")
 
-        exception = context.exception
-        self.assertEqual("Expected list got str instead.", str(exception))
+        self.assertEqual("Expected list got str instead.", str(context.exception))
 
         with self.assertRaises(ValidationError) as context:
             v.validate(["foo"])
@@ -274,8 +279,7 @@ class TestEachValidator(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             v.validate("foo")
 
-        exception = context.exception
-        self.assertEqual("Expected one of (int, float) got str instead.", str(exception))
+        self.assertEqual("Expected one of (int, float) got str instead.", str(context.exception))
 
     def test_datetime_validator(self):
         from datetime import datetime
@@ -292,7 +296,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("time data '01-01-2012' does not match format '%Y-%m-%d %H:%M:%S'", str(exception))
 
     def test_nullable_is_true(self):
-        from jsonweb.schema import ValidationError
         from jsonweb.schema.validators import Integer
 
         v = Integer(nullable=True)
