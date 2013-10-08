@@ -1,5 +1,7 @@
-JsonWeb
+JsonWeb 
 ========
+
+.. image:: https://travis-ci.org/boris317/JsonWeb.png?branch=master   :target: https://travis-ci.org/boris317/JsonWeb
 
 Add JSON (de)serialization to your python objects ::
 
