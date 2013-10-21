@@ -5,7 +5,6 @@ object. This module provides an easy way to encode your python class
 instances to JSON. Here is a quick example::
  
     >>> from jsonweb.encode import to_object, dumper
-    
     >>> @to_object()
     ... class DataModel(object):
     ...      def __init__(self, id, value):
@@ -113,7 +112,8 @@ def to_object(cls_type=None, suppress=None, handler=None, exclude_nulls=False):
     attributes that were specified via the* ``suppress`` *keyword argument*).
     
     Here is an example::
-    
+
+        >>> from jsonweb import to_object
         >>> @to_object()
         ... class Person(object):
         ...     def __init__(self, first_name, last_name):
@@ -128,7 +128,8 @@ def to_object(cls_type=None, suppress=None, handler=None, exclude_nulls=False):
     should represent the object type being encoded. By default it is set to
     the value of the decorated class's ``__name__`` attribute. You can
     specify your own value with ``cls_type``::
-                        
+
+        >>> from jsonweb import to_object
         >>> @to_object(cls_type="PersonObject")
         ... class Person(object):
         ...     def __init__(self, first_name, last_name):
@@ -142,7 +143,8 @@ def to_object(cls_type=None, suppress=None, handler=None, exclude_nulls=False):
     If you would like to leave some attributes out of the resulting JSON
     simply use the ``suppress`` kw argument to pass a list of attribute
     names::
-           
+
+        >>> from jsonweb import to_object
         >>> @to_object(suppress=["last_name"])
         ... class Person(object):
         ...     def __init__(self, first_name, last_name):
@@ -160,7 +162,8 @@ def to_object(cls_type=None, suppress=None, handler=None, exclude_nulls=False):
         
     Sometimes it's useful to suppress ``None`` values from your JSON output.
     Setting ``exclude_nulls`` to ``True`` will accomplish this ::
-    
+
+        >>> from jsonweb import to_object
         >>> @to_object(exclude_nulls=True)
         ... class Person(object):
         ...     def __init__(self, first_name, last_name):
@@ -183,11 +186,12 @@ def to_object(cls_type=None, suppress=None, handler=None, exclude_nulls=False):
     default object handler :func:`JsonWebEncoder.object_handler`.
     
     Here is an example::
-        
+
+        >>> from jsonweb import to_object
         >>> def person_encoder(person):
         ...     return {"FirstName": person.first_name, 
         ...         "LastName": person.last_name}
-            
+        ...
         >>> @to_object(handler=person_encoder)
         ... class Person(object):
         ...     def __init__(self, first_name, last_name):
