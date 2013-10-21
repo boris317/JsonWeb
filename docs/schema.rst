@@ -18,6 +18,7 @@ Validators
 .. automodule:: jsonweb.schema.validators
 
 .. autoclass:: jsonweb.schema.validators.String
+.. autoclass:: jsonweb.schema.validators.Regex
 .. autoclass:: jsonweb.schema.validators.Number
 .. autoclass:: jsonweb.schema.validators.Integer
 .. autoclass:: jsonweb.schema.validators.Float

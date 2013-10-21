@@ -2,6 +2,7 @@
 Validators for use in :mod:`jsonweb.schema`.
 """
 from datetime import datetime
+import re
 
 from jsonweb.exceptions import JsonWebError
 from jsonweb.schema.base import BaseValidator, ValidationError
@@ -151,6 +152,27 @@ class String(EnsureType):
         value = super(String, self)._validate(item)
         if self.max_len and len(value) > self.max_len:
             raise ValidationError("String exceeds max length of %s." % self.max_len)
+        return value
+
+
+class Regex(String):
+    """
+    .. versionadded:: 0.6.3 Validates a string against a regular expression ::
+
+        >>> Regex(r"^foo").validate("barfoo")
+        Traceback (most recent call last):
+        ...
+        ValidationError: String does not match pattern '^foo'.
+    """
+
+    def __init__(self, regex, max_len=None, **kw):
+        super(Regex, self).__init__(max_len=max_len, **kw)
+        self.regex = re.compile(regex)
+
+    def _validate(self, item):
+        value = super(Regex, self)._validate(item)
+        if self.regex.match(value) is None:
+            raise ValidationError("String does not match pattern '%s'." % self.regex.pattern)
         return value
 
 

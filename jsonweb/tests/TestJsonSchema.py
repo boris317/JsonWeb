@@ -1,5 +1,6 @@
 import unittest
 
+
 class TestJsonSchema(unittest.TestCase):
     def test_non_nested_obj_schema(self):
         from jsonweb.schema import ObjectSchema, ValidationError
@@ -12,7 +13,7 @@ class TestJsonSchema(unittest.TestCase):
             test = Float()
 
         obj = {"first_name": "Shawn", "last_name": "Adams", "id": 1, "test": 12.0}
-        self.assertEqual(PersonSchema().validate(obj), obj)
+        self.assertEqual(obj, PersonSchema().validate(obj))
 
     def test_nested_schema(self):
         from jsonweb.schema import ObjectSchema
@@ -37,9 +38,10 @@ class TestJsonSchema(unittest.TestCase):
             "job": {
                 "title": "zoo keeper",
                 "id": 1
-        }}
+            }
+        }
 
-        self.assertEqual(PersonSchema().validate(obj), obj)
+        self.assertEqual(obj, PersonSchema().validate(obj))
 
     def test_raises_validation_error(self):
         from jsonweb.schema import ObjectSchema, ValidationError
@@ -58,26 +60,26 @@ class TestJsonSchema(unittest.TestCase):
             schema.validate(obj)
 
         exc = context.exception
-        self.assertEqual(len(exc.errors), 3)
+        self.assertEqual(3, len(exc.errors))
         self.assertTrue("last_name" in exc.errors)
         self.assertTrue("id" in exc.errors)
         self.assertTrue("test" in exc.errors)
 
-        self.assertEqual(exc.errors["last_name"].message, "Missing required parameter.")
-        self.assertEqual(exc.errors["id"].message, "Missing required parameter.")
-        self.assertEqual(exc.errors["test"].message, "Missing required parameter.")
+        self.assertEqual("Missing required parameter.", exc.errors["last_name"].message)
+        self.assertEqual("Missing required parameter.", exc.errors["id"].message)
+        self.assertEqual("Missing required parameter.", exc.errors["test"].message)
 
         obj = {"first_name": 10, "last_name": "Adams", "id": 1, "test": "bad type"}
         with self.assertRaises(ValidationError) as context:
             schema.validate(obj)
 
         exc = context.exception
-        self.assertEqual(len(exc.errors), 2)
+        self.assertEqual(2, len(exc.errors))
         self.assertTrue("first_name" in exc.errors)
         self.assertTrue("test" in exc.errors)
 
-        self.assertEqual(exc.errors["first_name"].message, "Expected str got int instead.")
-        self.assertEqual(exc.errors["test"].message, "Expected float got str instead.")
+        self.assertEqual("Expected str got int instead.", exc.errors["first_name"].message)
+        self.assertEqual("Expected float got str instead.", exc.errors["test"].message)
 
     def test_compound_error(self):
         """
@@ -129,7 +131,7 @@ class TestJsonSchema(unittest.TestCase):
             List(PersonSchema()).validate(persons)
 
         exc = context.exception
-        self.assertEqual(exc.errors[0].error_index, 1)
+        self.assertEqual(1, exc.errors[0].error_index)
 
     def test_ensuretype_raises_validation_error(self):
         from jsonweb.schema import ObjectSchema, ValidationError
@@ -143,7 +145,7 @@ class TestJsonSchema(unittest.TestCase):
             id = EnsureType(Foo)
 
         with self.assertRaises(ValidationError) as context:
-            self.assertEqual(JobSchema().validate({"title": "jedi", "id": 1}), obj)
+            JobSchema().validate({"title": "jedi", "id": 1})
 
         exc = context.exception
         self.assertEqual(exc.errors["id"].message, "Expected Foo got int instead.")
@@ -169,15 +171,16 @@ class TestJsonSchema(unittest.TestCase):
         self.assertFalse(ensure_type.is_required())
 
     def test_attributes_can_be_optional(self):
-        from jsonweb.schema import ObjectSchema, ValidationError
-        from jsonweb.schema.validators import EnsureType, String
+        from jsonweb.schema import ObjectSchema
+        from jsonweb.schema.validators import String
 
         class PersonSchema(ObjectSchema):
             first_name = String()
             last_name = String(optional=True)
 
         person = {"first_name": "shawn"}
-        self.assertEqual(PersonSchema().validate(person), person)
+        self.assertEqual(person, PersonSchema().validate(person))
+
 
 class TestEachValidator(unittest.TestCase):
     def test_string_validator(self):
@@ -185,7 +188,7 @@ class TestEachValidator(unittest.TestCase):
         from jsonweb.schema.validators import String
 
         v = String()
-        self.assertEqual(v.validate("foo"), "foo")
+        self.assertEqual("foo", v.validate("foo"))
         with self.assertRaises(ValidationError) as context:
             v.validate(1)
 
@@ -196,11 +199,22 @@ class TestEachValidator(unittest.TestCase):
         from jsonweb.schema.validators import String
 
         v = String(max_len=3)
-        self.assertEqual(v.validate("foo"), "foo")
+        self.assertEqual("foo", v.validate("foo"))
         with self.assertRaises(ValidationError) as context:
             v.validate("foobar")
 
         self.assertEqual("String exceeds max length of 3.", str(context.exception))
+
+    def test_regex_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import Regex
+
+        v = Regex(r"^foo[0-9]")
+        self.assertEqual("foo12", v.validate("foo12"))
+        with self.assertRaises(ValidationError) as context:
+            v.validate("foo")
+
+        self.assertEqual("String does not match pattern '^foo[0-9]'.", str(context.exception))
 
     def test_integer_validator(self):
         from jsonweb.schema import ValidationError
@@ -218,7 +232,7 @@ class TestEachValidator(unittest.TestCase):
         from jsonweb.schema.validators import Float
 
         v = Float()
-        self.assertEqual(v.validate(42.0), 42.0)
+        self.assertEqual(42.0, v.validate(42.0))
         with self.assertRaises(ValidationError) as context:
             v.validate(42)
 
@@ -229,7 +243,7 @@ class TestEachValidator(unittest.TestCase):
         from jsonweb.schema.validators import Boolean
 
         v = Boolean()
-        self.assertEqual(v.validate(True), True)
+        self.assertEqual(True, v.validate(True))
         with self.assertRaises(ValidationError) as context:
             v.validate("5")
 
@@ -240,8 +254,8 @@ class TestEachValidator(unittest.TestCase):
         from jsonweb.schema.validators import Number
 
         v = Number()
-        self.assertEqual(v.validate(42.0), 42.0)
-        self.assertEqual(v.validate(42), 42)
+        self.assertEqual(42.0, v.validate(42.0))
+        self.assertEqual(42, v.validate(42))
         with self.assertRaises(ValidationError) as context:
             v.validate("foo")
 
@@ -252,7 +266,7 @@ class TestEachValidator(unittest.TestCase):
         from jsonweb.schema.validators import Number, List
 
         v = List(Number)
-        self.assertEqual(v.validate([1,2,3]), [1,2,3])
+        self.assertEqual([1, 2, 3], v.validate([1, 2, 3]))
 
         with self.assertRaises(ValidationError) as context:
             v.validate("foo")
@@ -264,17 +278,17 @@ class TestEachValidator(unittest.TestCase):
 
         exception = context.exception
         self.assertEqual("Error validating list.", str(exception))
-        self.assertEqual(len(exception.errors), 1)
-        self.assertEqual(exception.errors[0].error_index, 0)
-        self.assertEqual(str(exception.errors[0]), "Expected number got str instead.")
+        self.assertEqual(1, len(exception.errors))
+        self.assertEqual(0, exception.errors[0].error_index)
+        self.assertEqual("Expected number got str instead.", str(exception.errors[0]))
 
     def test_ensuretype_validator(self):
         from jsonweb.schema import ValidationError
         from jsonweb.schema.validators import EnsureType
 
         v = EnsureType((int, float))
-        self.assertEqual(v.validate(42.0), 42.0)
-        self.assertEqual(v.validate(42), 42)
+        self.assertEqual(42.0, v.validate(42.0))
+        self.assertEqual(42, v.validate(42))
 
         with self.assertRaises(ValidationError) as context:
             v.validate("foo")
@@ -299,4 +313,4 @@ class TestEachValidator(unittest.TestCase):
         from jsonweb.schema.validators import Integer
 
         v = Integer(nullable=True)
-        self.assertEqual(v.validate(None), None)
+        self.assertEqual(None, v.validate(None))
