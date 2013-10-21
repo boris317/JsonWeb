@@ -209,12 +209,16 @@ class TestEachValidator(unittest.TestCase):
         from jsonweb.schema import ValidationError
         from jsonweb.schema.validators import Regex
 
-        v = Regex(r"^foo[0-9]")
+        v = Regex(r"^foo[0-9]", max_len=10)
         self.assertEqual("foo12", v.validate("foo12"))
+
         with self.assertRaises(ValidationError) as context:
             v.validate("foo")
-
         self.assertEqual("String does not match pattern '^foo[0-9]'.", str(context.exception))
+
+        with self.assertRaises(ValidationError) as context:
+            v.validate("a"*11)
+        self.assertEqual("String exceeds max length of 10.", str(context.exception))
 
     def test_integer_validator(self):
         from jsonweb.schema import ValidationError
