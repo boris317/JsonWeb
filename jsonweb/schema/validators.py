@@ -6,6 +6,7 @@ from datetime import datetime
 from jsonweb.exceptions import JsonWebError
 from jsonweb.schema.base import BaseValidator, ValidationError
 
+
 class List(BaseValidator):
     """
     Validates a list of things. The List constructor accepts
@@ -43,7 +44,7 @@ class List(BaseValidator):
             raise ValidationError("Expected list got %s instead." % self._class_name(item))
         validated_objs = []
         errors = []
-        # We must manually envoke the descriptor protocol so that
+        # We must manually invoke the descriptor protocol so that
         # any string names passed to EnsureType get translated to
         # an actual class.
         if isinstance(self.validator, EnsureType):
@@ -60,6 +61,7 @@ class List(BaseValidator):
 
     def to_json(self):
         return super(List, self).to_json()
+
 
 class EnsureType(BaseValidator):
     """
@@ -79,12 +81,11 @@ class EnsureType(BaseValidator):
         super(EnsureType, self).__init__(**kw)
         self.__type = _type
         #``_type`` can be a string. This way you can reference a class
-        #that may not be defined yet. In this case we must explicity
+        #that may not be defined yet. In this case we must explicitly
         #set type_name or an instance error is raised inside ``__type_name``
         if isinstance(_type, basestring):
             type_name = _type
         self.__type_name = type_name or self.__type_name(_type)
-
 
     def _validate(self, item):
         if not isinstance(item, self.__type):
@@ -110,7 +111,8 @@ class EnsureType(BaseValidator):
         if not handler:
             raise JsonWebError("Cannot find class %s." % self.__type)
 
-        return EnsureType(handler[1],
+        return EnsureType(
+            handler[1],
             type_name=self.__type_name,
             optional=(not self.is_required()),
             nullable=self.is_nullable()
@@ -120,6 +122,7 @@ class EnsureType(BaseValidator):
         return super(EnsureType, self).to_json(
             type=self.__type_name, **kw
         )
+
 
 class String(EnsureType):
     """
@@ -150,20 +153,24 @@ class String(EnsureType):
             raise ValidationError("String exceeds max length of %s." % self.max_len)
         return value
 
+
 class Integer(EnsureType):
     """ Validates something in an integer """
     def __init__(self, **kw):
         super(Integer, self).__init__(int, **kw)
+
 
 class Float(EnsureType):
     """ Validates something is a float """
     def __init__(self, **kw):
         super(Float, self).__init__(float, **kw)
 
+
 class Boolean(EnsureType):
     """ Validates something is a Boolean (True/False)"""
     def __init__(self, **kw):
         super(Boolean, self).__init__(bool, **kw)
+
 
 class Number(EnsureType):
     """
@@ -181,6 +188,7 @@ class Number(EnsureType):
     """
     def __init__(self, **kw):
         super(Number, self).__init__((float, int), type_name="number", **kw)
+
 
 class DateTime(BaseValidator):
     """

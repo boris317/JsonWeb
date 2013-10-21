@@ -3,6 +3,7 @@ try:
 except ImportError:
     from dummy_threading import local
 
+
 class LocalStack(local):
     def __init__(self):
         self.stack = []
@@ -25,4 +26,3 @@ class LocalStack(local):
             return self.stack[-1]
         except IndexError:
             return None
-        

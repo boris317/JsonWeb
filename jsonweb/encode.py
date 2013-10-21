@@ -25,11 +25,13 @@ import json
 import datetime
 import types
 
+
 class EncodeArgs:
     __type__ = None
     serialize_as = None
     handler = None
     suppress = None
+
 
 def handler(func):
     """
@@ -47,7 +49,7 @@ def handler(func):
         ...     def to_obj(self):
         ...         return {"FirstName": person.first_name, 
         ...             "LastName": person.last_name}
-        
+        ...
         >>> @encode.to_list()
         ... class People(object):
         ...     def __init__(self, *persons):
@@ -55,14 +57,14 @@ def handler(func):
         ...     @encode.handler
         ...     def to_list(self):
         ...         return self.persons
-        
+        ...
         >>> people = People(
         ...     Person("Luke", "Skywalker"),
         ...     Person("Darth", "Vader"),
         ...     Person("Obi-Wan" "Kenobi")
         ... )
-    
-        >>> print dumper(person, indent=2)
+        ...
+        >>> print dumper(people, indent=2)
         [
           {
             "FirstName": "Luke", 
@@ -82,6 +84,7 @@ def handler(func):
     func._jsonweb_encode_handler = True
     return func
 
+
 def __inspect_for_handler(cls):
     cls._encode.handler_is_instance_method = False
     if cls._encode.handler:
@@ -100,13 +103,14 @@ def __inspect_for_handler(cls):
             break
     return cls
 
-def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
+
+def to_object(cls_type=None, suppress=None, handler=None, exclude_nulls=False):
     """
     To make your class instances JSON encodable decorate them with
     :func:`json_object`. The python built-in :py:func:`dir` is called on the
     class instance to retrieve key/value pairs that will make up the JSON
     object (*Minus any attributes that start with an underscore or any
-    attributes that were specified via the* ``suppress`` *keyword agrument*).
+    attributes that were specified via the* ``suppress`` *keyword argument*).
     
     Here is an example::
     
@@ -204,12 +208,13 @@ def to_object(cls_type=None, suppress=[], handler=None, exclude_nulls=False):
         cls._encode = EncodeArgs()
         cls._encode.serialize_as = "json_object"
         cls._encode.handler = handler
-        cls._encode.suppress = suppress
+        cls._encode.suppress = suppress or []
         cls._encode.exclude_nulls = exclude_nulls
         cls._encode.__type__ = cls_type or cls.__name__                       
         return __inspect_for_handler(cls)
     return wrapper
-    
+
+
 def to_list(handler=None):
     """
     If your class instances should serialize into a JSON list decorate it
@@ -219,7 +224,7 @@ def to_list(handler=None):
     
     Here is an example::
         
-        @to_object(supress=["__type__"])
+        @to_object(suppress=["__type__"])
         class Person(object):
             def __init__(self, first_name, last_name):
                 self.first_name = first_name
@@ -248,10 +253,10 @@ def to_list(handler=None):
             {"first_name": "Obi-Wan", "last_name": "Kenobi"}
         ]    
     
-    .. versionadded:: 0.6.0 You can now specify a custom hanlder callable
+    .. versionadded:: 0.6.0 You can now specify a custom handler callable
        with the ``handler`` kw argument. It should accept one argument, your
        class instance. You can also use the :func:`jsonweb.encode.handler`
-       decorator to mark one of the class's methods as the list hanlder.
+       decorator to mark one of the class's methods as the list handler.
             
     """
     def wrapper(cls):
@@ -262,12 +267,13 @@ def to_list(handler=None):
         return __inspect_for_handler(cls)
     return wrapper
 
+
 class JsonWebEncoder(json.JSONEncoder):
     """
     This :class:`json.JSONEncoder` subclass is responsible for encoding
-    instances of classess that have been decorated with :func:`to_object` or
+    instances of classes that have been decorated with :func:`to_object` or
     :func:`to_list`. Pass :class:`JsonWebEncoder` as the value for the
-    ``cls`` keyword agrument to :func:`json.dump` or :func:`json.dumps`.
+    ``cls`` keyword argument to :func:`json.dump` or :func:`json.dumps`.
     
     Example::
     
@@ -282,6 +288,7 @@ class JsonWebEncoder(json.JSONEncoder):
     
     _DT_FORMAT = "%Y-%m-%dT%H:%M:%S"
     _D_FORMAT = "%Y-%m-%d"
+
     def __init__(self, **kw):
         self.__hard_suppress = kw.pop("suppress", [])
         self.__exclude_nulls = kw.pop("exclude_nulls", None)
@@ -321,7 +328,7 @@ class JsonWebEncoder(json.JSONEncoder):
         in ``obj.__dict__``. Excluding attributes that
         
         * start with an underscore.
-        * were specified with the ``suppress`` keyword agrument.
+        * were specified with the ``suppress`` keyword argument.
         
         The returned dict will be encoded into JSON.
         
@@ -351,8 +358,7 @@ class JsonWebEncoder(json.JSONEncoder):
         if not suppressed("__type__"):
             json_obj["__type__"] = obj._encode.__type__
         return json_obj
-    
-        
+
     def list_handler(self, obj):
         """
         Handles encoding instance objects of classes decorated by
@@ -365,7 +371,8 @@ class JsonWebEncoder(json.JSONEncoder):
                 
         """        
         return list(obj)
-    
+
+
 def dumper(obj, **kw):
     """
     JSON encode your class instances by calling this function as you would
@@ -386,4 +393,3 @@ def dumper(obj, **kw):
     """
     return json.dumps(obj, cls=kw.pop("cls", JsonWebEncoder), **kw)
 
-    

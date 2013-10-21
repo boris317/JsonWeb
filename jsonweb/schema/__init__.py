@@ -11,13 +11,13 @@ is an example of validating the structure of a python dict::
     ...     last_name = String()
         
     >>> try:
-    ...     PersonSchema.validate({"first_name": "shawn"})
+    ...     PersonSchema().validate({"first_name": "shawn"})
     ... except ValidationError, e:
     ...     print e.errors
     {"last_name": "Missing required parameter."}
     
 Validating plain old python data structures is fine, but the more interesting exercise is tying
-a schema to a class defination::
+a schema to a class definition::
 
     >>> from jsonweb.decode import from_object, loader
     >>> from jsonweb.schema import ObjectSchema, ValidationError
@@ -35,7 +35,7 @@ You can make any field optional by setting ``optional`` to :class:`True`.
 .. warning::
 
     The field is only optional at the schema level. If you've bound a schema to
-    a class via :func:`from_object` and the uderlying class requires that field a
+    a class via :func:`from_object` and the underlying class requires that field a
     :class:`ObjectAttributeError` will be raised if missing.
     
 As you can see its fine to pass a class name as a string, which we have done for 
@@ -72,8 +72,8 @@ with :func:`jsonweb.decode.from_object` ::
     ...         "first_name": "Bob",
     ...         "last_name": "Smith",
     ...         "job": {"__type__": "Job", "id": 5, "title": "Police Officer"},
-    ...     }
-    ... '''
+    ...     }'''
+    ...
     
     >>> person = loader(person_json)
     >>> print person

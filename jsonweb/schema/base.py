@@ -28,6 +28,7 @@ class BaseValidator(object):
         
     def is_required(self):
         return self.__required
+
     def is_nullable(self):
         return self.__nullable
     
@@ -83,7 +84,7 @@ class ObjectSchema(BaseValidator):
             v = getattr(self, field)
             try:
                 val_obj[field] = v.validate(obj[field])
-            except KeyError, e:
+            except KeyError:
                 if v.is_required():
                     errors[field] = ValidationError("Missing required parameter.")
             except ValidationError, e:
@@ -94,10 +95,10 @@ class ObjectSchema(BaseValidator):
 
 
 def bind_schema(type_name, schema_obj):
-    from jsonweb.decode import _default_object_handlers
     """
     Use this function to add an :class:`ObjectSchema` to a class already
     decorated by :func:`from_object`.
     """
+    from jsonweb.decode import _default_object_handlers
     _default_object_handlers._update_handler_deferred(type_name, 
                                                       schema=schema_obj)
