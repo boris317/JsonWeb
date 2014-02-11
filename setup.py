@@ -10,7 +10,7 @@ else:
 
 setup(name='JsonWeb',
       version=version,
-      description="Package for building json de/serialization of your data models in a web app.",
+      description="Quickly add json serialization and deserialization to your python classes.",
       long_description=long_description,
       classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='',
