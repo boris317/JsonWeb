@@ -42,7 +42,7 @@ class List(BaseValidator):
 
     def _validate(self, item):
         if not isinstance(item, list):
-            raise ValidationError("Expected list got %s instead." % self._class_name(item))
+            raise ValidationError("Expected list got {0} instead.".format(self._class_name(item)))
         validated_objs = []
         errors = []
         # We must manually invoke the descriptor protocol so that
@@ -90,12 +90,13 @@ class EnsureType(BaseValidator):
 
     def _validate(self, item):
         if not isinstance(item, self.__type):
-            raise ValidationError("Expected %s got %s instead." % (self.__type_name, self._class_name(item)))
+            raise ValidationError("Expected {0} got {1} instead.".format(
+                self.__type_name, self._class_name(item)))
         return item
 
     def __type_name(self, _type):
         if isinstance(_type, tuple):
-            return "one of (%s)" % ", ".join((t.__name__ for t in _type))
+            return "one of ({0})".format(", ".join((t.__name__ for t in _type)))
         return _type.__name__
 
     def __get__(self, obj, type=None):
@@ -110,7 +111,7 @@ class EnsureType(BaseValidator):
         handler = _default_object_handlers.get(self.__type)
 
         if not handler:
-            raise JsonWebError("Cannot find class %s." % self.__type)
+            raise JsonWebError("Cannot find class {0}.".format(self.__type))
 
         return EnsureType(
             handler[1],
@@ -151,7 +152,7 @@ class String(EnsureType):
     def _validate(self, item):
         value = super(String, self)._validate(item)
         if self.max_len and len(value) > self.max_len:
-            raise ValidationError("String exceeds max length of %s." % self.max_len)
+            raise ValidationError("String exceeds max length of {0}.".format(self.max_len))
         return value
 
 
@@ -172,7 +173,7 @@ class Regex(String):
     def _validate(self, item):
         value = super(Regex, self)._validate(item)
         if self.regex.match(value) is None:
-            raise ValidationError("String does not match pattern '%s'." % self.regex.pattern)
+            raise ValidationError("String does not match pattern '{0}'.".format(self.regex.pattern))
         return value
 
 

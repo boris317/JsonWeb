@@ -60,7 +60,7 @@ with :func:`jsonweb.decode.from_object` ::
     ...         self.gender = gender
     ...         self.job = job
     ...     def __str__(self):
-    ...         return '<Person name="%s" job="%s">' % (
+    ...         return '<Person name="%s" job="{0}">'.format(
     ...             " ".join((self.first_name, self.last_name)),   
     ...             self.job.title
     ...         )

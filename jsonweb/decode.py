@@ -69,7 +69,7 @@ class ObjectAttributeError(ObjectDecodeError):
     def __init__(self, obj_type, attr):
         ObjectDecodeError.__init__(
             self,
-            "Missing %s attribute for %s." % (attr, obj_type), 
+            "Missing {0} attribute for {1}.".format(attr, obj_type),
             obj_type=obj_type, 
             attribute=attr
         )
@@ -79,7 +79,7 @@ class ObjectNotFoundError(ObjectDecodeError):
     def __init__(self, obj_type):
         ObjectDecodeError.__init__(
             self,
-            "Cannot decode object %s. No such object." % obj_type, 
+            "Cannot decode object {0}. No such object.".format(obj_type),
             obj_type=obj_type,
         )
 
@@ -240,8 +240,8 @@ def get_arg_spec(func):
 def get_jsonweb_handler(cls):
     arg_spec = get_arg_spec(cls.__init__)
     if arg_spec is None:
-        raise JsonWebError("Unable to generate an object_hook handler "
-                           "from %s's `__init__` method." % cls.__name__)
+        raise JsonWebError("Unable to generate an object_hook handler from "
+                           "{0}'s `__init__` method.".format(cls.__name__))
     args, kw = get_arg_spec(cls.__init__)
 
     return JsonWebObjectHandler(args, kw or None)

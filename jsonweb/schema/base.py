@@ -78,7 +78,7 @@ class ObjectSchema(BaseValidator):
         errors = {}        
         if not isinstance(obj, dict):
             raise ValidationError(
-                "Expected dict got %s instead." % (self._class_name(obj))
+                "Expected dict got {0} instead.".format(self._class_name(obj))
             )
         for field in self._fields:
             v = getattr(self, field)
