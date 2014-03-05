@@ -26,3 +26,5 @@ Validators
 .. autoclass:: jsonweb.schema.validators.DateTime
 .. autoclass:: jsonweb.schema.validators.EnsureType
 .. autoclass:: jsonweb.schema.validators.List
+.. autoclass:: jsonweb.schema.validators.OneOf
+.. autoclass:: jsonweb.schema.validators.SubSetOf

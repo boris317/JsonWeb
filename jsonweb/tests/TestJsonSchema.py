@@ -318,3 +318,24 @@ class TestEachValidator(unittest.TestCase):
 
         v = Integer(nullable=True)
         self.assertEqual(None, v.validate(None))
+
+    def test_one_of_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import OneOf
+
+        self.assertEqual(OneOf(1, 2, 3).validate(1), 1)
+
+        with self.assertRaises(ValidationError) as c:
+            OneOf(1, "2", 3).validate("1")
+        self.assertEqual("Expected one of (1, '2', 3) but got '1' instead.",
+                         str(c.exception))
+
+    def test_sub_set_of_validator(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import SubSetOf
+
+        self.assertEqual(SubSetOf([1, 2, 3]).validate([1, 3]), [1, 3])
+
+        with self.assertRaises(ValidationError) as c:
+            SubSetOf([1, 2, 3]).validate([2, 5])
+        self.assertEqual("[2, 5] is not a subset of [1, 2, 3]", str(c.exception))

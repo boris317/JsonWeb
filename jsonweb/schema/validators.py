@@ -247,3 +247,53 @@ class DateTime(BaseValidator):
             type="DateTime",
             format=self.format
         )
+
+
+class OneOf(BaseValidator):
+    """
+    .. versionadded:: 0.6.4
+        Validates something is a one of a list of allowed values::
+
+        >>> OneOf("a", "b", "c").validate(1)
+        Traceback (most recent call last):
+            ...
+        ValidationError: Expected one of (a, b, c) got 1 instead.
+    """
+    def __init__(self, *values, **kw):
+        super(OneOf, self).__init__(**kw)
+        self.allowed_values = values
+
+    def _validate(self, item):
+
+        def stringify(item):
+            if isinstance(item, basestring):
+                return "'{0}'".format(item)
+            return str(item)
+
+        if item not in self.allowed_values:
+            raise ValidationError("Expected one of {0} but got {1} instead.".format(
+                self.allowed_values, stringify(item)
+            ))
+        return item
+
+
+class SubSetOf(BaseValidator):
+    """
+    .. versionadded:: 0.6.4 Validates a list is subset of another list::
+
+        >>> SubSetOf([1, 2, 3, 4]).validate([1, 4])
+        ... [1, 4]
+        >>> SubSetOf([1, 2, 3, 4]).validate([1,5])
+        Traceback (most recent call last):
+            ...
+        ValidationError: [1, 5] is not a subset of [1, 2, 3, 4].
+    """
+
+    def __init__(self, super_set, **kw):
+        super(SubSetOf, self).__init__(**kw)
+        self.super_set = super_set
+
+    def _validate(self, sub_set):
+        if not set(sub_set).issubset(self.super_set):
+            raise ValidationError("{0} is not a subset of {1}".format(sub_set, self.super_set))
+        return sub_set
