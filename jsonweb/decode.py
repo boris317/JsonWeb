@@ -35,9 +35,7 @@ detailed explanation.
 
 import inspect
 import json
-import copy
 from contextlib import contextmanager
-from datetime import datetime
 
 from jsonweb.schema.validators import EnsureType
 from jsonweb.exceptions import JsonWebError
@@ -186,8 +184,7 @@ class ObjectHook(object):
     json into python class instances. You should not need to use this class
     directly. :func:`object_hook` is responsible for instantiating and using it.
     """
-    _DT_FORMAT = _DATETIME_FORMAT
-            
+
     def __init__(self, handlers, validate=True):
         self.handlers = handlers
         self.validate = validate
@@ -218,20 +215,6 @@ class ObjectHook(object):
         except KeyError, e:
             raise ObjectAttributeError(obj_type, e.args[0])
         
-    def _datetime(self, dt):
-        if dt is None:
-            return
-        try:
-            return datetime.strptime(dt, self._DT_FORMAT)
-        except TypeError, e:
-            raise ObjectDecodeError(
-                "datetime attribute for %s must be a string, not %s" %
-                (self.obj, type(dt))
-            )
-
-        except ValueError, e:
-            raise ObjectDecodeError(e.args[0])
-
 
 def get_arg_spec(func):
     arg_spec = inspect.getargspec(func)
