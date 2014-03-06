@@ -1,7 +1,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.6.5'
+version = '0.6.6'
 
 if os.path.exists("README.rst"):
     long_description = open("README.rst").read()

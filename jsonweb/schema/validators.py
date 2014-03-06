@@ -137,20 +137,30 @@ class String(EnsureType):
             ...
         ValidationError: Expected str got int instead.
 
-    You can also specify a maximum string length ::
+    Specify a maximum length ::
 
         >>> String(max_len=3).validate("foobar")
         Traceback (most recent call last):
         ...
         ValidationError: String exceeds max length of 3.
 
+    Specify a minimum length ::
+
+        >>> String(min_len=3).validate("fo")
+        Traceback (most recent call last):
+        ...
+        ValidationError: String must be at least length 3.
+
     """
-    def __init__(self, max_len=None, **kw):
+    def __init__(self, min_len=None, max_len=None, **kw):
         super(String, self).__init__(basestring, type_name="str", **kw)
         self.max_len = max_len
+        self.min_len = min_len
 
     def _validate(self, item):
         value = super(String, self)._validate(item)
+        if self.min_len and len(value) < self.min_len:
+            raise ValidationError("String must be at least length {0}.".format(self.min_len))
         if self.max_len and len(value) > self.max_len:
             raise ValidationError("String exceeds max length of {0}.".format(self.max_len))
         return value

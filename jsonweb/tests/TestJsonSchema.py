@@ -200,10 +200,21 @@ class TestEachValidator(unittest.TestCase):
 
         v = String(max_len=3)
         self.assertEqual("foo", v.validate("foo"))
-        with self.assertRaises(ValidationError) as context:
+        with self.assertRaises(ValidationError) as c:
             v.validate("foobar")
 
-        self.assertEqual("String exceeds max length of 3.", str(context.exception))
+        self.assertEqual("String exceeds max length of 3.", str(c.exception))
+
+    def test_string_validator_min_len_kw(self):
+        from jsonweb.schema import ValidationError
+        from jsonweb.schema.validators import String
+
+        v = String(min_len=3)
+
+        with self.assertRaises(ValidationError) as c:
+            v.validate("fo")
+
+        self.assertEqual("String must be at least length 3.", str(c.exception))
 
     def test_regex_validator(self):
         from jsonweb.schema import ValidationError
