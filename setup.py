@@ -12,7 +12,6 @@ setup(name='JsonWeb',
       version=version,
       description="Quickly add json serialization and deserialization to your python classes.",
       long_description=long_description,
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='',
       author='Shawn Adams',
       author_email='',
@@ -27,4 +26,14 @@ setup(name='JsonWeb',
       entry_points="""
       # -*- Entry points: -*-
       """,
+      classifiers=[
+          'Development Status :: 4 - Beta',
+          'Environment :: Web Environment',
+          'Intended Audience :: Developers',
+          'License :: OSI Approved :: BSD License',
+          'Operating System :: OS Independent',
+          'Programming Language :: Python',
+          'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
+          'Topic :: Software Development :: Libraries :: Python Modules'
+      ]
       )
