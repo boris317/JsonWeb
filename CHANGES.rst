@@ -1,6 +1,12 @@
 JsonWeb Changelog
 =================
 
+Version 0.7.0
+-------------
+
+-- Python 3 support!
+
+
 Version 0.6.6
 -------------
 - Added `min_len` kw arg to :class:`~jsonweb.schema.validators.String`

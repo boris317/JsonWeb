@@ -1,7 +1,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.6.6'
+version = '0.7.0'
 
 if os.path.exists("README.rst"):
     long_description = open("README.rst").read()
@@ -32,7 +32,9 @@ setup(name='JsonWeb',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: BSD License',
           'Operating System :: OS Independent',
-          'Programming Language :: Python',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: Implementation :: CPython',
           'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
           'Topic :: Software Development :: Libraries :: Python Modules'
       ]

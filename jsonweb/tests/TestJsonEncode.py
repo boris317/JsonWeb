@@ -48,7 +48,7 @@ class TestJsonEnecode(unittest.TestCase):
             def object_handler(self, obj):
                 message.append("my_object_handler")
                 suppress = obj._encode.suppress
-                json_obj = dict([(k,v) for k,v in obj.__dict__.iteritems() if not k.startswith("_") and k not in suppress])
+                json_obj = dict([(k,v) for k,v in obj.__dict__.items() if not k.startswith("_") and k not in suppress])
                 if "__type__" not in suppress:
                     json_obj["__type__"] = obj._encode.__type__
                 return json_obj
@@ -81,7 +81,7 @@ class TestJsonEnecode(unittest.TestCase):
         
         # the dumper call with actually fail if it tries to
         # serialize a method type.
-        self.assertIsInstance(dumper(person), basestring)
+        self.assertIsInstance(dumper(person), str)
 
         
     def test_supplied_obj_handler(self):

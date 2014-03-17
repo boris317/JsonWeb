@@ -36,6 +36,7 @@ detailed explanation.
 import inspect
 import json
 from contextlib import contextmanager
+from jsonweb.py3k import items
 
 from jsonweb.schema.validators import EnsureType
 from jsonweb.exceptions import JsonWebError
@@ -174,7 +175,7 @@ class _ObjectHandlers(object):
         return self.__handlers[handler]
     
     def __iter__(self):
-        for name, handler_tuple in self.__handlers.iteritems():
+        for name, handler_tuple in items(self.__handlers):
             yield name, handler_tuple
 
 
@@ -212,7 +213,7 @@ class ObjectHook(object):
             obj = schema().validate(obj)
         try:
             return factory(cls, obj)
-        except KeyError, e:
+        except KeyError as e:
             raise ObjectAttributeError(obj_type, e.args[0])
         
 
@@ -459,7 +460,7 @@ def object_hook(handlers=None, as_type=None, validate=True):
     """
     if handlers:
         _object_handlers = _default_object_handlers.copy()
-        for name, handler_dict in handlers.iteritems():
+        for name, handler_dict in items(handlers):
             if name in _object_handlers:
                 _object_handlers.update_handler(name, **handler_dict)
             else:
@@ -508,7 +509,7 @@ def loader(json_str, **kw):
     
     try:
         obj = json.loads(json_str, **kw)
-    except ValueError, e:
+    except ValueError as e:
         raise JsonDecodeError(e.args[0])
     
     if ensure_type:

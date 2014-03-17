@@ -1,5 +1,6 @@
 from jsonweb.exceptions import JsonWebError
 from jsonweb import encode
+from jsonweb.py3k import PY3k, items
 
 
 def update_dict(d, **kw):
@@ -56,13 +57,13 @@ class BaseValidator(object):
     
 
 class SchemaMeta(type):
-    def __new__(meta, class_name, bases, class_dict):
+    def __new__(mcs, class_name, bases, class_dict):
         fields = []
-        for k,v in class_dict.iteritems():
+        for k, v in items(class_dict):
             if hasattr(v, "_validate"):
                 fields.append(k)
         class_dict["_fields"] = fields
-        return type.__new__(meta, class_name, bases, class_dict)    
+        return type.__new__(mcs, class_name, bases, class_dict)
 
 
 class ObjectSchema(BaseValidator):
@@ -87,7 +88,7 @@ class ObjectSchema(BaseValidator):
             except KeyError:
                 if v.is_required():
                     errors[field] = ValidationError("Missing required parameter.")
-            except ValidationError, e:
+            except ValidationError as e:
                     errors[field] = e
         if errors:
             raise ValidationError("Error validating object.", errors)
@@ -102,3 +103,11 @@ def bind_schema(type_name, schema_obj):
     from jsonweb.decode import _default_object_handlers
     _default_object_handlers._update_handler_deferred(type_name, 
                                                       schema=schema_obj)
+
+
+if PY3k:
+    ObjectSchema = SchemaMeta(
+        ObjectSchema.__name__,
+        (BaseValidator, ),
+        dict(vars(ObjectSchema))
+    )

@@ -65,9 +65,9 @@ class TestJsonSchema(unittest.TestCase):
         self.assertTrue("id" in exc.errors)
         self.assertTrue("test" in exc.errors)
 
-        self.assertEqual("Missing required parameter.", exc.errors["last_name"].message)
-        self.assertEqual("Missing required parameter.", exc.errors["id"].message)
-        self.assertEqual("Missing required parameter.", exc.errors["test"].message)
+        self.assertEqual("Missing required parameter.", str(exc.errors["last_name"]))
+        self.assertEqual("Missing required parameter.", str(exc.errors["id"]))
+        self.assertEqual("Missing required parameter.", str(exc.errors["test"]))
 
         obj = {"first_name": 10, "last_name": "Adams", "id": 1, "test": "bad type"}
         with self.assertRaises(ValidationError) as context:
@@ -78,8 +78,8 @@ class TestJsonSchema(unittest.TestCase):
         self.assertTrue("first_name" in exc.errors)
         self.assertTrue("test" in exc.errors)
 
-        self.assertEqual("Expected str got int instead.", exc.errors["first_name"].message)
-        self.assertEqual("Expected float got str instead.", exc.errors["test"].message)
+        self.assertEqual("Expected str got int instead.", str(exc.errors["first_name"]))
+        self.assertEqual("Expected float got str instead.", str(exc.errors["test"]))
 
     def test_compound_error(self):
         """
@@ -115,8 +115,8 @@ class TestJsonSchema(unittest.TestCase):
         exc = context.exception
         self.assertTrue("job" in exc.errors)
         self.assertEqual(len(exc.errors["job"].errors), 2)
-        self.assertEqual(exc.errors["job"].errors["id"].message, "Missing required parameter.")
-        self.assertEqual(exc.errors["job"].errors["title"].message, "Missing required parameter.")
+        self.assertEqual(str(exc.errors["job"].errors["id"]), "Missing required parameter.")
+        self.assertEqual(str(exc.errors["job"].errors["title"]), "Missing required parameter.")
 
     def test_list_schema_error(self):
         from jsonweb.schema import ObjectSchema, ValidationError
@@ -148,7 +148,7 @@ class TestJsonSchema(unittest.TestCase):
             JobSchema().validate({"title": "jedi", "id": 1})
 
         exc = context.exception
-        self.assertEqual(exc.errors["id"].message, "Expected Foo got int instead.")
+        self.assertEqual(str(exc.errors["id"]), "Expected Foo got int instead.")
 
     def test_ensuretype_kw_arguments_stick_around(self):
         """

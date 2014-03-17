@@ -1,11 +1,12 @@
 import json
 import unittest
 
+
 class TestDecodeSchema(unittest.TestCase):
     def setUp(self):
         from jsonweb.decode import _default_object_handlers
         _default_object_handlers.clear()
-        print "clearing handlers"
+        print("clearing handlers")
         
     def test_decode_with_schema(self):
         from jsonweb.schema import ObjectSchema
@@ -72,22 +73,21 @@ class TestDecodeSchema(unittest.TestCase):
         
         json_str = '{"__type__": "Person", "first_name": 123, "last_name": "adams"}'
         with self.assertRaises(ValidationError) as context:
-            person = json.loads(json_str, object_hook=object_hook())
+            json.loads(json_str, object_hook=object_hook())
             
         exc = context.exception
-        self.assertEqual(exc.errors["first_name"].message, "Expected str got int instead.")
+        self.assertEqual(str(exc.errors["first_name"]), "Expected str got int instead.")
         
     def test_class_name_as_string_to_ensuretype(self):
         """
         Test that we can pass a string for a class name to EnsureType. The class
         must of course be defined later and decorated with @from_object
         """
-        from jsonweb.schema import ObjectSchema, ValidationError
+        from jsonweb.schema import ObjectSchema
         from jsonweb.schema.validators import String, Integer, EnsureType
         
         from jsonweb.decode import from_object, object_hook
-        
-                                
+
         class JobSchema(ObjectSchema):
             id = Integer()
             title = String()

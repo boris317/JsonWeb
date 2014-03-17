@@ -1,9 +1,10 @@
 """
 Validators for use in :mod:`jsonweb.schema`.
 """
-from datetime import datetime
 import re
+from datetime import datetime
 
+from jsonweb.py3k import basestring
 from jsonweb.exceptions import JsonWebError
 from jsonweb.schema.base import BaseValidator, ValidationError
 
@@ -53,7 +54,7 @@ class List(BaseValidator):
         for i, obj in enumerate(item):
             try:
                 validated_objs.append(self.validator.validate(obj))
-            except ValidationError, e:
+            except ValidationError as e:
                 e.error_index = i
                 errors.append(e)
         if errors:
@@ -84,7 +85,7 @@ class EnsureType(BaseValidator):
         #``_type`` can be a string. This way you can reference a class
         #that may not be defined yet. In this case we must explicitly
         #set type_name or an instance error is raised inside ``__type_name``
-        if isinstance(_type, basestring):
+        if isinstance(_type, str):
             type_name = _type
         self.__type_name = type_name or self.__type_name(_type)
 
@@ -103,7 +104,7 @@ class EnsureType(BaseValidator):
 
         if type is None:
             return self
-        if not isinstance(self.__type, basestring):
+        if not isinstance(self.__type, str):
             return self
 
         from jsonweb.decode import _default_object_handlers
@@ -249,7 +250,7 @@ class DateTime(BaseValidator):
     def _validate(self, item):
         try:
             return datetime.strptime(item, self.format)
-        except ValueError, e:
+        except ValueError as e:
             raise ValidationError(str(e))
 
     def to_json(self):
@@ -276,7 +277,7 @@ class OneOf(BaseValidator):
     def _validate(self, item):
 
         def stringify(item):
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 return "'{0}'".format(item)
             return str(item)
 

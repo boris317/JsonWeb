@@ -1,5 +1,7 @@
 language: python
 python:
   - "2.7"
+  - "3.2"
+  - "3.3"
 install: "pip install -r test_requires.txt --use-mirrors"
 script: python setup.py test
