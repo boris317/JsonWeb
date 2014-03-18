@@ -439,6 +439,7 @@ def object_hook(handlers=None, as_type=None, validate=True):
         ``handler`` and ``schema`` values later. Here is an example of
         overriding a schema you defined with :func:`from_object` (some code
         is left out for brevity)::
+
             >>> from jsonweb import from_object
             >>> @from_object(schema=PersonSchema)
             >>> class Person(object):

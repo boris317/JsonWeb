@@ -117,8 +117,8 @@ class EnsureType(BaseValidator):
         return EnsureType(
             handler[1],
             type_name=self.__type_name,
-            optional=(not self.is_required()),
-            nullable=self.is_nullable()
+            optional=(not self.required),
+            nullable=self.nullable
         )
 
     def to_json(self, **kw):

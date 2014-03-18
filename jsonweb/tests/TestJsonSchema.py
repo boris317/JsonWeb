@@ -167,8 +167,8 @@ class TestJsonSchema(unittest.TestCase):
 
         ensure_type = FooSchema().bar
 
-        self.assertTrue(ensure_type.is_nullable())
-        self.assertFalse(ensure_type.is_required())
+        self.assertTrue(ensure_type.nullable)
+        self.assertFalse(ensure_type.required)
 
     def test_attributes_can_be_optional(self):
         from jsonweb.schema import ObjectSchema
@@ -180,6 +180,20 @@ class TestJsonSchema(unittest.TestCase):
 
         person = {"first_name": "shawn"}
         self.assertEqual(person, PersonSchema().validate(person))
+
+    def test_attributes_can_have_default_values(self):
+        from jsonweb.schema import ObjectSchema
+        from jsonweb.schema.validators import String
+
+        class PersonSchema(ObjectSchema):
+            species = String(default="Human")
+            first_name = String()
+            last_name = String()
+
+        person = PersonSchema().validate(
+            {"first_name": "shawn", "last_name": "adams"}
+        )
+        self.assertEqual(person.get("species"), "Human")
 
 
 class TestEachValidator(unittest.TestCase):

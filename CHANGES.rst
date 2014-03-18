@@ -1,6 +1,12 @@
 JsonWeb Changelog
 =================
 
+Version 0.8
+-------------
+
+-- Added `default` kw arg to validators
+
+
 Version 0.7.1
 -------------
 

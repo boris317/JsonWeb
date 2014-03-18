@@ -17,6 +17,11 @@ Validators
 
 .. automodule:: jsonweb.schema.validators
 
+.. autoclass:: jsonweb.schema.base.BaseValidator
+   :members:
+
+   .. automethod:: __init__
+
 .. autoclass:: jsonweb.schema.validators.String
 .. autoclass:: jsonweb.schema.validators.Regex
 .. autoclass:: jsonweb.schema.validators.Number

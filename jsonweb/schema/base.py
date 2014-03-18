@@ -25,19 +25,22 @@ class ValidationError(JsonWebError):
 
 @encode.to_object()
 class BaseValidator(object):
-    def __init__(self, optional=False, nullable=False):
-        self.__required = (not optional)
-        self.__nullable = nullable
-        
-    def is_required(self):
-        return self.__required
+    """
+    Abstract base validator which all JsonWeb validators should inherit from.
+    """
+    def __init__(self, optional=False, nullable=False, default=None):
+        """
+        :param optional: Is the item optional?
+        :param nullable: Can the item's value can be None?
+        :param default: A default value for this item.
+        """
+        self.required = (not optional)
+        self.nullable = nullable
+        self.default = default
 
-    def is_nullable(self):
-        return self.__nullable
-    
     def validate(self, item):
         if item is None:
-            if self.is_nullable():
+            if self.nullable:
                 return item
             raise ValidationError("Cannot be null.")
         return self._validate(item)
@@ -45,8 +48,8 @@ class BaseValidator(object):
     @encode.handler
     def to_json(self, **kw):
         obj = {
-            "required": self.is_required(),
-            "nullable": self.is_nullable()
+            "required": self.required,
+            "nullable": self.nullable
         }
         obj.update(kw)
         return obj
@@ -78,18 +81,24 @@ class ObjectSchema(BaseValidator):
     
     def _validate(self, obj):
         val_obj = {}
-        errors = {}        
+        errors = {}
+
         if not isinstance(obj, dict):
             raise ValidationError(
                 "Expected dict got {0} instead.".format(self._class_name(obj))
             )
+
         for field in self._fields:
             v = getattr(self, field)
+
             try:
-                val_obj[field] = v.validate(obj[field])
-            except KeyError:
-                if v.is_required():
-                    errors[field] = ValidationError("Missing required parameter.")
+                if field not in obj:
+                    if v.default is not None:
+                        val_obj[field] = v.default
+                    elif v.required:
+                        errors[field] = ValidationError("Missing required parameter.")
+                else:
+                    val_obj[field] = v.validate(obj[field])
             except ValidationError as e:
                     errors[field] = e
         if errors:
