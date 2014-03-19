@@ -131,7 +131,7 @@ class TestJsonSchema(unittest.TestCase):
             List(PersonSchema()).validate(persons)
 
         exc = context.exception
-        self.assertEqual(1, exc.errors[0].error_index)
+        self.assertEqual(1, exc.errors[0].extras["index"])
 
     def test_ensuretype_raises_validation_error(self):
         from jsonweb.schema import ObjectSchema, ValidationError
@@ -294,7 +294,7 @@ class TestEachValidator(unittest.TestCase):
         exception = context.exception
         self.assertEqual("Error validating list.", str(exception))
         self.assertEqual(1, len(exception.errors))
-        self.assertEqual(0, exception.errors[0].error_index)
+        self.assertEqual(0, exception.errors[0].extras["index"])
         self.assertEqual("Expected number got str instead.", str(exception.errors[0]))
 
     def test_ensuretype_validator(self):
@@ -358,11 +358,23 @@ class TestValidationError(unittest.TestCase):
         from jsonweb.schema import ValidationError
         e = ValidationError("Boom", {"key": "value"})
 
-        expected_dict = {"message": "Boom", "errors": {"key": "value"}}
+        expected_dict = {"reason": "Boom", "errors": {"key": "value"}}
         self.assertDictEqual(e.to_json(), expected_dict)
 
     def test_to_json_with_no_errors(self):
         from jsonweb.schema import ValidationError
         e = ValidationError("Boom")
 
-        self.assertEqual(e.to_json(), "Boom")
+        self.assertEqual(e.to_json(), {"reason": "Boom"})
+
+    def test_to_json_with_extras(self):
+        from jsonweb.schema import ValidationError
+        e = ValidationError("Boom", {"key": "value"}, foo="bar")
+
+        expected_dict = {
+            "reason": "Boom",
+            "foo": "bar",
+            "errors": {"key": "value"}
+
+        }
+        self.assertDictEqual(e.to_json(), expected_dict)

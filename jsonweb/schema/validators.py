@@ -55,7 +55,7 @@ class List(BaseValidator):
             try:
                 validated_objs.append(self.validator.validate(obj))
             except ValidationError as e:
-                e.error_index = i
+                e.extras["index"] = i
                 errors.append(e)
         if errors:
             raise ValidationError("Error validating list.", errors=errors)

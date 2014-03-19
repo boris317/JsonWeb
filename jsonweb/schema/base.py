@@ -10,15 +10,17 @@ def update_dict(d, **kw):
 
 @encode.to_object()
 class ValidationError(JsonWebError):
-    def __init__(self, message, errors=None):
-        JsonWebError.__init__(self, message)
+    def __init__(self, message, errors=None, **extras):
+        JsonWebError.__init__(self, message, **extras)
         self.errors = errors
         
     @encode.handler
     def to_json(self):
+        obj = {"reason": str(self)}
+        obj.update(self.extras)
         if self.errors:
-            return {"message": str(self), "errors": self.errors}
-        return str(self)
+            obj["errors"] = self.errors
+        return obj
 
 
 @encode.to_object()
