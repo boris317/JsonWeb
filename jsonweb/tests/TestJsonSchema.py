@@ -350,3 +350,19 @@ class TestEachValidator(unittest.TestCase):
         with self.assertRaises(ValidationError) as c:
             SubSetOf([1, 2, 3]).validate([2, 5])
         self.assertEqual("[2, 5] is not a subset of [1, 2, 3]", str(c.exception))
+
+
+class TestValidationError(unittest.TestCase):
+
+    def test_to_json_with_errors(self):
+        from jsonweb.schema import ValidationError
+        e = ValidationError("Boom", {"key": "value"})
+
+        expected_dict = {"message": "Boom", "errors": {"key": "value"}}
+        self.assertDictEqual(e.to_json(), expected_dict)
+
+    def test_to_json_with_no_errors(self):
+        from jsonweb.schema import ValidationError
+        e = ValidationError("Boom")
+
+        self.assertEqual(e.to_json(), "Boom")

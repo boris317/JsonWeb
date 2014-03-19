@@ -1,6 +1,12 @@
 JsonWeb Changelog
 =================
 
+Version 0.7.1
+-------------
+
+-- Fixed exception when calling ValidationError.to_json in python 3
+
+
 Version 0.7.0
 -------------
 

@@ -17,8 +17,8 @@ class ValidationError(JsonWebError):
     @encode.handler
     def to_json(self):
         if self.errors:
-            return {"message": self.message, "errors": self.errors}
-        return self.message
+            return {"message": str(self), "errors": self.errors}
+        return str(self)
 
 
 @encode.to_object()
