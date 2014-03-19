@@ -12,10 +12,10 @@ class _Errors(object):
     def __init__(self, list_or_dict):
         self.errors = list_or_dict
 
-    def add_error(self, exc, key=None, error_type=None, **extras):
+    def add_error(self, exc, key=None, reason_code=None, **extras):
         exc = isinstance(exc, ValidationError) and exc or ValidationError(exc)
-        if error_type is not None:
-            exc.extras["error_type"] = error_type
+        if reason_code is not None:
+            exc.reason_code = reason_code
         exc.extras.update(extras)
 
         if key is not None:
@@ -23,9 +23,9 @@ class _Errors(object):
         else:
             self.errors.append(exc)
 
-    def raise_if_errors(self, reason, **extras):
+    def raise_if_errors(self, reason, **kw):
         if self.errors:
-            raise ValidationError(reason, errors=self.errors, **extras)
+            raise ValidationError(reason, errors=self.errors, **kw)
 
 
 @encode.to_object()
@@ -33,21 +33,27 @@ class ValidationError(JsonWebError):
     """
     Raised from ``JsonWeb`` validators when validation of an object fails.
     """
-    def __init__(self, reason, errors=None, **extras):
+    def __init__(self, reason, reason_code=None, errors=None, **extras):
         """
         :param reason: A nice message describing what was not valid
+        :param reason_code: A programmatic friendly reason code
         :param errors: A ``list`` or ``dict`` of nested ``ValidationError``
         :param extras: Any extra info about the error you want to convey
         """
         JsonWebError.__init__(self, reason, **extras)
         self.errors = errors
+        self.reason_code = reason_code
 
     @encode.handler
     def to_json(self):
         obj = {"reason": str(self)}
         obj.update(self.extras)
+
         if self.errors:
             obj["errors"] = self.errors
+        if self.reason_code:
+            obj["reason_code"] = self.reason_code
+
         return obj
 
 
@@ -69,7 +75,7 @@ class BaseValidator(object):
 
     """
     def __init__(self, optional=False, nullable=False,
-                 default=None, error_type=None):
+                 default=None, reason_code=None):
         """
         All validators that inherit from ``BaseValidator`` should pass
         ``optional``, ``nullable`` and ``default`` as explicit kw arguments
@@ -78,16 +84,13 @@ class BaseValidator(object):
         :param optional: Is the item optional?
         :param nullable: Can the item's value can be None?
         :param default: A default value for this item.
-        :param error_type: An error code that will be added to any
-                          :class:`ValidationError` raised from this instance.
-                          ``error_type`` is added to the ``extras`` dict and
-                          will be displayed when the error is serialized to
-                          JSON.
+        :param reason_code: Failure reason_code that is passed to any
+                           :class:`ValidationError` raised from this instance.
         """
         self.required = (not optional)
         self.nullable = nullable
         self.default = default
-        self.error_type = error_type
+        self.reason_code = reason_code
 
     def validate(self, item):
         if item is None:
@@ -114,8 +117,8 @@ class BaseValidator(object):
 
         exc = ValidationError(message)
 
-        if self.error_type is not None:
-            exc.extras["error_type"] = self.error_type
+        if self.reason_code is not None:
+            exc.reason_code = self.reason_code
         raise exc
 
 
@@ -147,7 +150,7 @@ class Dict(BaseValidator):
             validator.validate({"en-US": 1})
         except ValidationError as e:
              print(e.errors["en-US"])
-             print(e.errors["en-US"].extras["error_type"])
+             print(e.errors["en-US"].reason_code)
 
         # output
         # String does not match pattern '^[a-z]{2}_[A-Z]{2}$'.
@@ -163,7 +166,7 @@ class Dict(BaseValidator):
                               of a dict will be validated against.
                               (Default: :class:`String`)
         """
-        super(Dict, self).__init__(error_type="invalid_dict", **kw)
+        super(Dict, self).__init__(reason_code="invalid_dict", **kw)
         self.validator = to_instance(validator)
         self.key_validator = to_instance(key_validator) or String()
         assert isinstance(self.key_validator, String)
@@ -179,10 +182,10 @@ class Dict(BaseValidator):
             try:
                 validated_obj[k] = get_validator(self.validator).validate(v)
             except ValidationError as e:
-                errors.add_error(e, key=k, error_type="invalid_dict_value")
+                errors.add_error(e, key=k, reason_code="invalid_dict_value")
 
         errors.raise_if_errors("Error validating dict.",
-                               error_type=self.error_type)
+                               reason_code=self.reason_code)
         return validated_obj
 
     def _key_is_valid(self, key, errors):
@@ -191,7 +194,7 @@ class Dict(BaseValidator):
         try:
             self.key_validator.validate(key)
         except ValidationError as e:
-            errors.add_error(e, key=key, error_type="invalid_dict_key")
+            errors.add_error(e, key=key, reason_code="invalid_dict_key")
             return False
         return True
 
@@ -223,7 +226,7 @@ class List(BaseValidator):
 
     """
     def __init__(self, validator, **kw):
-        super(List, self).__init__(error_type="invalid_list", **kw)
+        super(List, self).__init__(reason_code="invalid_list", **kw)
         self.validator = to_instance(validator)
 
     def _validate(self, item):
@@ -237,10 +240,10 @@ class List(BaseValidator):
                     get_validator(self.validator).validate(obj)
                 )
             except ValidationError as e:
-                errors.add_error(e, error_type="invalid_list_item", index=i)
+                errors.add_error(e, reason_code="invalid_list_item", index=i)
 
         errors.raise_if_errors("Error validating list.",
-                               error_type=self.error_type)
+                               reason_code=self.reason_code)
         return validated_objs
 
     def to_json(self):
@@ -264,7 +267,7 @@ class EnsureType(BaseValidator):
 
     def __init__(self, _type, type_name=None, **kw):
         super(EnsureType, self).__init__(
-            error_type=kw.pop("error_type", "invalid_type"), **kw
+            reason_code=kw.pop("reason_code", "invalid_type"), **kw
         )
         self.__type = _type
         #``_type`` can be a string. This way you can reference a class
@@ -340,7 +343,7 @@ class String(EnsureType):
     """
     def __init__(self, min_len=None, max_len=None, **kw):
         super(String, self).__init__(basestring, type_name="str",
-                                     error_type="invalid_str", **kw)
+                                     reason_code="invalid_str", **kw)
         self.max_len = max_len
         self.min_len = min_len
 
@@ -409,7 +412,7 @@ class Number(EnsureType):
     """
     def __init__(self, **kw):
         super(Number, self).__init__((float, int), type_name="number",
-                                     error_type="invalid_number", **kw)
+                                     reason_code="invalid_number", **kw)
 
 
 class DateTime(BaseValidator):
@@ -434,7 +437,7 @@ class DateTime(BaseValidator):
 
     """
     def __init__(self, format="%Y-%m-%d %H:%M:%S", **kw):
-        super(DateTime, self).__init__(error_type="invalid_datetime", **kw)
+        super(DateTime, self).__init__(reason_code="invalid_datetime", **kw)
         self.format = format
 
     def _validate(self, item):
@@ -461,7 +464,7 @@ class OneOf(BaseValidator):
         ValidationError: Expected one of (a, b, c) got 1 instead.
     """
     def __init__(self, *values, **kw):
-        super(OneOf, self).__init__(error_type="not_one_of", **kw)
+        super(OneOf, self).__init__(reason_code="not_one_of", **kw)
         self.allowed_values = values
 
     def _validate(self, item):
@@ -491,7 +494,7 @@ class SubSetOf(BaseValidator):
     """
 
     def __init__(self, super_set, **kw):
-        super(SubSetOf, self).__init__(error_type="not_a_sub_set_of", **kw)
+        super(SubSetOf, self).__init__(reason_code="not_a_sub_set_of", **kw)
         self.super_set = super_set
 
     def _validate(self, sub_set):
@@ -518,7 +521,7 @@ def isinstance_or_raise(obj, cls):
         raise ValidationError("Expected {0} got {1} instead.".format(
             cls_name(cls),
             cls_name(obj)
-        ), error_type="invalid_type")
+        ), reason_code="invalid_type")
 
 
 def cls_name(obj):

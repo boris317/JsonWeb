@@ -39,7 +39,7 @@ class TestEachValidator(unittest.TestCase):
 
         exc = c.exception
         self.assertEqual("String does not match pattern '^foo[0-9]'.", str(exc))
-        self.assertEqual("invalid_str", exc.extras["error_type"])
+        self.assertEqual("invalid_str", exc.reason_code)
 
         with self.assertRaises(ValidationError) as c:
             v.validate("a"*11)
@@ -90,7 +90,7 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("Error validating dict.", str(exc))
         self.assertEqual(1, len(exc.errors))
         self.assertEqual("Expected number got list instead.", str(exc.errors["foo"]))
-        self.assertEqual("invalid_dict", str(exc.extras["error_type"]))
+        self.assertEqual("invalid_dict", exc.reason_code)
 
     def test_dict_key_validator(self):
         v = Dict(Number, key_validator=Regex("[a-z]{2}_[A-Z]{2}"))
@@ -103,7 +103,7 @@ class TestEachValidator(unittest.TestCase):
         exc = c.exception
         self.assertEqual("String does not match pattern "
                          "'[a-z]{2}_[A-Z]{2}'.", str(exc.errors["en-US"]))
-        self.assertEqual("invalid_dict_key", exc.errors["en-US"].extras["error_type"])
+        self.assertEqual("invalid_dict_key", exc.errors["en-US"].reason_code)
 
     def test_list_validator(self):
         v = List(Number)
@@ -121,7 +121,7 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("Error validating list.", str(exc))
         self.assertEqual(1, len(exc.errors))
         self.assertEqual(0, exc.errors[0].extras["index"])
-        self.assertEqual("invalid_list_item", exc.errors[0].extras["error_type"])
+        self.assertEqual("invalid_list_item", exc.errors[0].reason_code)
         self.assertEqual("Expected number got str instead.", str(exc.errors[0]))
 
     def test_ensuretype_validator(self):
@@ -134,7 +134,7 @@ class TestEachValidator(unittest.TestCase):
 
         exc = c.exception
         self.assertEqual("Expected one of (int, float) got str instead.", str(exc))
-        self.assertEqual("invalid_type", exc.extras["error_type"])
+        self.assertEqual("invalid_type", exc.reason_code)
 
     def test_datetime_validator(self):
         v = DateTime()
@@ -146,7 +146,7 @@ class TestEachValidator(unittest.TestCase):
         exc = c.exception
         self.assertEqual("time data '01-01-2012' does not "
                          "match format '%Y-%m-%d %H:%M:%S'", str(exc))
-        self.assertEqual("invalid_datetime", exc.extras["error_type"])
+        self.assertEqual("invalid_datetime", exc.reason_code)
 
     def test_nullable_is_true(self):
         v = Integer(nullable=True)
@@ -161,7 +161,7 @@ class TestEachValidator(unittest.TestCase):
         exc = c.exception
         self.assertEqual("Expected one of (1, '2', 3) "
                          "but got '1' instead.", str(exc))
-        self.assertEqual("not_one_of", exc.extras["error_type"])
+        self.assertEqual("not_one_of", exc.reason_code)
 
     def test_sub_set_of_validator(self):
         self.assertEqual(SubSetOf([1, 2, 3]).validate([1, 3]), [1, 3])
@@ -171,13 +171,13 @@ class TestEachValidator(unittest.TestCase):
 
         exc = c.exception
         self.assertEqual("[2, 5] is not a subset of [1, 2, 3]", str(exc))
-        self.assertEqual("not_a_sub_set_of", exc.extras["error_type"])
+        self.assertEqual("not_a_sub_set_of", exc.reason_code)
 
 
 class TestValidationError(unittest.TestCase):
 
     def test_to_json_with_errors(self):
-        e = ValidationError("Boom", {"key": "value"})
+        e = ValidationError("Boom", errors={"key": "value"})
 
         expected_dict = {"reason": "Boom", "errors": {"key": "value"}}
         self.assertDictEqual(e.to_json(), expected_dict)
@@ -188,10 +188,23 @@ class TestValidationError(unittest.TestCase):
         self.assertEqual(e.to_json(), {"reason": "Boom"})
 
     def test_to_json_with_extras(self):
-        e = ValidationError("Boom", {"key": "value"}, foo="bar")
+        e = ValidationError("Boom", errors={"key": "value"}, foo="bar")
 
         expected_dict = {
             "reason": "Boom",
+            "foo": "bar",
+            "errors": {"key": "value"}
+        }
+
+        self.assertDictEqual(e.to_json(), expected_dict)
+
+    def test_to_json_with_reason_code(self):
+        e = ValidationError("Boom", reason_code="because",
+                            errors={"key": "value"}, foo="bar")
+
+        expected_dict = {
+            "reason": "Boom",
+            "reason_code": "because",
             "foo": "bar",
             "errors": {"key": "value"}
         }
