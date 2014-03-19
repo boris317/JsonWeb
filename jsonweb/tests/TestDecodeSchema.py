@@ -1,5 +1,10 @@
 import json
 import unittest
+from jsonweb import from_object
+from jsonweb.decode import object_hook, loader, ObjectDecodeError
+from jsonweb.exceptions import JsonWebError
+from jsonweb.schema import ObjectSchema, bind_schema
+from jsonweb.validators import String, ValidationError, Integer, EnsureType, List
 
 
 class TestDecodeSchema(unittest.TestCase):
@@ -9,11 +14,7 @@ class TestDecodeSchema(unittest.TestCase):
         print("clearing handlers")
         
     def test_decode_with_schema(self):
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import String
-        
-        from jsonweb.decode import from_object, object_hook
-        
+
         class PersonSchema(ObjectSchema):
             first_name = String()
             last_name = String()
@@ -30,11 +31,7 @@ class TestDecodeSchema(unittest.TestCase):
         self.assertTrue(isinstance(person, Person))
         
     def test_schemas_do_not_run_when_validate_kw_is_false(self):
-        from jsonweb.schema import ObjectSchema, ValidationError
-        from jsonweb.schema.validators import String
-        
-        from jsonweb.decode import from_object, loader, ObjectDecodeError
-        
+
         class PersonSchema(ObjectSchema):
             first_name = String()
             last_name = String()
@@ -56,12 +53,7 @@ class TestDecodeSchema(unittest.TestCase):
         when using a supplied schema test that a validation error
         is raised for invalid json.
         """
-        
-        from jsonweb.schema import ObjectSchema, ValidationError
-        from jsonweb.schema.validators import String
-        
-        from jsonweb.decode import from_object, object_hook
-        
+
         class PersonSchema(ObjectSchema):
             first_name = String()
             last_name = String()
@@ -84,10 +76,6 @@ class TestDecodeSchema(unittest.TestCase):
         Test that we can pass a string for a class name to EnsureType. The class
         must of course be defined later and decorated with @from_object
         """
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import String, Integer, EnsureType
-        
-        from jsonweb.decode import from_object, object_hook
 
         class JobSchema(ObjectSchema):
             id = Integer()
@@ -133,14 +121,7 @@ class TestDecodeSchema(unittest.TestCase):
         existent class to EnsureType. Meaning it either was not defined or
         was not decorated with @from_object
         """
-        
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import String, Integer, EnsureType
-        
-        from jsonweb.decode import from_object, object_hook
-        from jsonweb.exceptions import JsonWebError
-        
-                                
+
         class JobSchema(ObjectSchema):
             id = Integer()
             title = String()
@@ -148,7 +129,7 @@ class TestDecodeSchema(unittest.TestCase):
         class PersonSchema(ObjectSchema):
             first_name = String()
             last_name = String()
-            job = EnsureType("Job")#No such class Job
+            job = EnsureType("Job") # No such class Job
                 
         @from_object(schema=PersonSchema)
         class Person(object):
@@ -169,7 +150,7 @@ class TestDecodeSchema(unittest.TestCase):
         }}
         
         with self.assertRaises(JsonWebError) as context:
-            person = json.loads(json.dumps(obj), object_hook=object_hook())
+            json.loads(json.dumps(obj), object_hook=object_hook())
             
         exc = context.exception
         self.assertEqual(str(exc), "Cannot find class Job.")
@@ -178,10 +159,7 @@ class TestDecodeSchema(unittest.TestCase):
         """
         Test ObjectSchema validates a mix of regular dicts and object hook classes.
         """
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import String, List, EnsureType
-        from jsonweb.decode import from_object, object_hook
-        
+
         class TestRequestSchema(ObjectSchema):
             request_guid = String()
             players = List(EnsureType("Person"))
@@ -206,10 +184,7 @@ class TestDecodeSchema(unittest.TestCase):
         self.assertTrue(isinstance(request_obj["persons"][0], Person))
         
     def test_map_schema_func(self):
-        from jsonweb.schema import ObjectSchema, ValidationError, bind_schema
-        from jsonweb.schema.validators import String
-        from jsonweb.decode import from_object, loader
-        
+
         class PersonSchema(ObjectSchema):
             first_name = String()
             last_name = String()
@@ -228,10 +203,7 @@ class TestDecodeSchema(unittest.TestCase):
         """
         Test binding a schema to a class before it is defined works.
         """
-        from jsonweb.schema import ObjectSchema, ValidationError, bind_schema
-        from jsonweb.schema.validators import String
-        from jsonweb.decode import from_object, loader
-        
+
         class PersonSchema(ObjectSchema):
             first_name = String()
             last_name = String()
@@ -243,17 +215,12 @@ class TestDecodeSchema(unittest.TestCase):
             def __init__(self, first_name, last_name):
                 self.first_name = first_name
                 self.last_name = last_name        
-                    
 
-        with self.assertRaises(ValidationError) as context:
+        with self.assertRaises(ValidationError):
             loader('{"__type__": "Person"}')
             
     def test_EnsureType_invoked_via_List_validator_honors_string_class_names(self):
-        from jsonweb import loader
-        from jsonweb.decode import from_object
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import EnsureType, List, String, Integer
-        
+
         class JobSchema(ObjectSchema):
             id = Integer()
             title = String()

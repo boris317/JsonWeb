@@ -1,22 +1,168 @@
-"""
-Validators for use in :mod:`jsonweb.schema`.
-"""
+
 import inspect
 import re
 from datetime import datetime
+from jsonweb import encode
 
 from jsonweb.py3k import basestring, items
 from jsonweb.exceptions import JsonWebError
-from jsonweb.schema.base import BaseValidator, _Errors, ValidationError, \
-    cls_name, isinstance_or_raise
+
+
+class _Errors(object):
+    def __init__(self, list_or_dict):
+        self.errors = list_or_dict
+
+    def add_error(self, exc, key=None, error_type=None, **extras):
+        exc = isinstance(exc, ValidationError) and exc or ValidationError(exc)
+        if error_type is not None:
+            exc.extras["error_type"] = error_type
+        exc.extras.update(extras)
+
+        if key is not None:
+            self.errors[key] = exc
+        else:
+            self.errors.append(exc)
+
+    def raise_if_errors(self, reason, **extras):
+        if self.errors:
+            raise ValidationError(reason, errors=self.errors, **extras)
+
+
+@encode.to_object()
+class ValidationError(JsonWebError):
+    """
+    Raised from ``JsonWeb`` validators when validation of an object fails.
+    """
+    def __init__(self, reason, errors=None, **extras):
+        """
+        :param reason: A nice message describing what was not valid
+        :param errors: A ``list`` or ``dict`` of nested ``ValidationError``
+        :param extras: Any extra info about the error you want to convey
+        """
+        JsonWebError.__init__(self, reason, **extras)
+        self.errors = errors
+
+    @encode.handler
+    def to_json(self):
+        obj = {"reason": str(self)}
+        obj.update(self.extras)
+        if self.errors:
+            obj["errors"] = self.errors
+        return obj
+
+
+@encode.to_object()
+class BaseValidator(object):
+    """
+    Abstract base validator which all ``JsonWeb`` validators should inherit
+    from. Out of the box ``JsonWeb`` comes with a dozen or so validators.
+
+    All validators will override :meth:`BaseValidator._validate` method which
+    should accept an object and return the passed in object or raise a
+    :class:`ValidationError` if validation failed.
+
+    .. note::
+
+        You are not `required` to return the exact passed in object. You may
+        for instance want to transform the object in some way. This is exactly
+        what :class:`DateTime` does.
+
+    """
+    def __init__(self, optional=False, nullable=False,
+                 default=None, error_type=None):
+        """
+        All validators that inherit from ``BaseValidator`` should pass
+        ``optional``, ``nullable`` and ``default`` as explicit kw arguments
+        or ``**kw``.
+
+        :param optional: Is the item optional?
+        :param nullable: Can the item's value can be None?
+        :param default: A default value for this item.
+        :param error_type: An error code that will be added to any
+                          :class:`ValidationError` raised from this instance.
+                          ``error_type`` is added to the ``extras`` dict and
+                          will be displayed when the error is serialized to
+                          JSON.
+        """
+        self.required = (not optional)
+        self.nullable = nullable
+        self.default = default
+        self.error_type = error_type
+
+    def validate(self, item):
+        if item is None:
+            if self.nullable:
+                return item
+            self.raise_error("Cannot be null.")
+        return self._validate(item)
+
+    @encode.handler
+    def to_json(self, **kw):
+        obj = {
+            "required": self.required,
+            "nullable": self.nullable
+        }
+        obj.update(kw)
+        return obj
+
+    def _validate(self, item):
+        raise NotImplemented
+
+    def raise_error(self, message, *args):
+        if len(args):
+            message = message.format(*args)
+
+        exc = ValidationError(message)
+
+        if self.error_type is not None:
+            exc.extras["error_type"] = self.error_type
+        raise exc
 
 
 class Dict(BaseValidator):
     """
-    Validates a dict of things.
+    Validates a dict of things. The Dict constructor accepts
+    a validator and each value in the dict will be validated
+    against it ::
+
+        >>> Dict(Number).validate({'foo': 1})
+        ... {'foo': 1}
+
+        >>> Dict(Number).validate({'foo': "abc"})
+        Traceback (most recent call last):
+            ...
+        ValidationError: Error validating dict.
+
+    In order see what part of the dict failed validation we must dig
+    deeper into the exception::
+
+        >>> str(e.errors["foo"])
+        ... 'Expected number got str instead.'
+
+    ``Dict`` also accepts an optional ``key_validator``, which must be a subclass
+    of :class:`String`: ::
+
+        validator = Dict(Number, key_validator=Regex(r'^[a-z]{2}_[A-Z]{2}$'))
+        try:
+            validator.validate({"en-US": 1})
+        except ValidationError as e:
+             print(e.errors["en-US"])
+             print(e.errors["en-US"].extras["error_type"])
+
+        # output
+        # String does not match pattern '^[a-z]{2}_[A-Z]{2}$'.
+        # invalid_dict_key
+
     """
 
     def __init__(self, validator, key_validator=None, **kw):
+        """
+        :param validator: A :class:`BaseValidator` subclass which all values
+                          of a dict will be validated against.
+        :param key_validator: A :class:`String` subclass which all keys
+                              of a dict will be validated against.
+                              (Default: :class:`String`)
+        """
         super(Dict, self).__init__(error_type="invalid_dict", **kw)
         self.validator = to_instance(validator)
         self.key_validator = to_instance(key_validator) or String()
@@ -53,14 +199,15 @@ class Dict(BaseValidator):
 class List(BaseValidator):
     """
     Validates a list of things. The List constructor accepts
-    a validator and each item in a the list will be validated
+    a validator and each item in the list will be validated
     against it ::
 
         >>> List(Integer).validate([1,2,3,4])
         ... [1,2,3,4]
 
         >>> List(Integer).validate(10)
-        ...
+        Traceback (most recent call last):
+            ...
         ValidationError: Expected list got int instead.
 
     Since :class:`ObjectSchema` is also a validator we can do this ::
@@ -98,19 +245,6 @@ class List(BaseValidator):
 
     def to_json(self):
         return super(List, self).to_json()
-
-
-def to_instance(obj):
-    return inspect.isclass(obj) and obj() or obj
-
-
-def get_validator(validator):
-    # We must manually invoke the descriptor protocol so that
-    # any string names passed to EnsureType get translated to
-    # an actual class.
-    if isinstance(validator, EnsureType):
-        return validator.__get__(None, List)
-    return validator
 
 
 class EnsureType(BaseValidator):
@@ -280,7 +414,8 @@ class Number(EnsureType):
 
 class DateTime(BaseValidator):
     """
-    Validates that something is a date/datetime string ::
+    Validates that something is a valid date/datetime string and turns it
+    into a :py:class:`datetime.datetime` instance ::
 
         >>> DateTime().validate("2010-01-02 12:30:00")
         ... datetime.datetime(2010, 1, 2, 12, 30)
@@ -290,7 +425,8 @@ class DateTime(BaseValidator):
             ...
         ValidationError: time data '2010-01-02 12:300' does not match format '%Y-%m-%d %H:%M:%S'
 
-    The default datetime format is ``%Y-%m-%d %H:%M:%S``. You can specify your own ::
+    The default datetime format is ``%Y-%m-%d %H:%M:%S``. You can specify your
+    own ::
 
         >>> DateTime("%m/%d/%Y").validate("01/02/2010")
         ... datetime.datetime(2010, 1, 2, 0, 0)
@@ -362,3 +498,30 @@ class SubSetOf(BaseValidator):
         if set(sub_set).issubset(self.super_set):
             return sub_set
         self.raise_error("{0} is not a subset of {1}", sub_set, self.super_set)
+
+
+def to_instance(obj):
+    return inspect.isclass(obj) and obj() or obj
+
+
+def get_validator(validator):
+    # We must manually invoke the descriptor protocol so that
+    # any string names passed to EnsureType get translated to
+    # an actual class.
+    if isinstance(validator, EnsureType):
+        return validator.__get__(None, List)
+    return validator
+
+
+def isinstance_or_raise(obj, cls):
+    if not isinstance(obj, cls):
+        raise ValidationError("Expected {0} got {1} instead.".format(
+            cls_name(cls),
+            cls_name(obj)
+        ), error_type="invalid_type")
+
+
+def cls_name(obj):
+    if inspect.isclass(obj):
+        return obj.__name__
+    return obj.__class__.__name__

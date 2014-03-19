@@ -38,7 +38,7 @@ import json
 from contextlib import contextmanager
 from jsonweb.py3k import items
 
-from jsonweb.schema.validators import EnsureType
+from jsonweb.validators import EnsureType
 from jsonweb.exceptions import JsonWebError
 from jsonweb._local import LocalStack
 
@@ -353,8 +353,8 @@ def from_object(handler=None, type_name=None, schema=None):
     Here is a quick example::
 
         >>> from jsonweb import from_object
-        >>> from jsonweb.schema import ObjectSchema, ValidationError
-        >>> from jsonweb.schema.validators import String
+        >>> from jsonweb.schema import ObjectSchema
+        >>> from jsonweb.validators import ValidationError, String
         >>> class PersonSchema(ObjectSchema):
         ...    first_name = String()
         ...    last_name = String()

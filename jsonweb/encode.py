@@ -182,7 +182,7 @@ def to_object(cls_type=None, suppress=None, handler=None, exclude_nulls=False):
     
     If you need greater control over how your object is encoded you can
     specify a ``handler`` callable. It should accept one argument, which is
-    the object to encode, and it should return a dict. This would overide the
+    the object to encode, and it should return a dict. This would override the
     default object handler :func:`JsonWebEncoder.object_handler`.
     
     Here is an example::

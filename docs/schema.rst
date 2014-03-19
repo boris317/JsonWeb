@@ -1,35 +1,38 @@
 :mod:`jsonweb.schema`
-======================================================
+=============================
 
 .. contents:: Table of Contents
    :depth: 3
 
 .. automodule:: jsonweb.schema
 
-ValidationErrors
-----------------
+:mod:`jsonweb.validators`
+=============================
 
-.. autoclass:: ValidationError
+.. automodule:: jsonweb.validators
 
-
-Validators
--------------
-
-.. automodule:: jsonweb.schema.validators
-
-.. autoclass:: jsonweb.schema.base.BaseValidator
+.. autoclass:: jsonweb.validators.BaseValidator
    :members:
 
    .. automethod:: __init__
 
-.. autoclass:: jsonweb.schema.validators.String
-.. autoclass:: jsonweb.schema.validators.Regex
-.. autoclass:: jsonweb.schema.validators.Number
-.. autoclass:: jsonweb.schema.validators.Integer
-.. autoclass:: jsonweb.schema.validators.Float
-.. autoclass:: jsonweb.schema.validators.Boolean
-.. autoclass:: jsonweb.schema.validators.DateTime
-.. autoclass:: jsonweb.schema.validators.EnsureType
-.. autoclass:: jsonweb.schema.validators.List
-.. autoclass:: jsonweb.schema.validators.OneOf
-.. autoclass:: jsonweb.schema.validators.SubSetOf
+.. autoclass:: jsonweb.validators.String
+.. autoclass:: jsonweb.validators.Regex
+.. autoclass:: jsonweb.validators.Number
+.. autoclass:: jsonweb.validators.Integer
+.. autoclass:: jsonweb.validators.Float
+.. autoclass:: jsonweb.validators.Boolean
+.. autoclass:: jsonweb.validators.DateTime
+.. autoclass:: jsonweb.validators.EnsureType
+.. autoclass:: jsonweb.validators.List
+.. autoclass:: jsonweb.validators.Dict
+.. autoclass:: jsonweb.validators.OneOf
+.. autoclass:: jsonweb.validators.SubSetOf
+
+ValidationErrors
+----------------
+
+.. autoclass:: jsonweb.validators.ValidationError
+   :members:
+
+   .. automethod:: __init__

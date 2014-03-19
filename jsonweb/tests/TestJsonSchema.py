@@ -1,11 +1,13 @@
+from datetime import datetime
 import unittest
-from jsonweb import dumper
+from jsonweb import from_object
+from jsonweb.schema import ObjectSchema
+from jsonweb.validators import String, Float, Integer, ValidationError, List, \
+    EnsureType, Regex, Boolean, Number, Dict, DateTime, OneOf, SubSetOf
 
 
 class TestJsonSchema(unittest.TestCase):
     def test_non_nested_obj_schema(self):
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import String, Float, Integer
 
         class PersonSchema(ObjectSchema):
             first_name = String()
@@ -17,8 +19,6 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(obj, PersonSchema().validate(obj))
 
     def test_nested_schema(self):
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import String, Float, Integer
 
         class JobSchema(ObjectSchema):
             title = String()
@@ -45,8 +45,6 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(obj, PersonSchema().validate(obj))
 
     def test_raises_validation_error(self):
-        from jsonweb.schema import ObjectSchema, ValidationError
-        from jsonweb.schema.validators import String, Float, Integer
 
         class PersonSchema(ObjectSchema):
             first_name = String()
@@ -86,8 +84,6 @@ class TestJsonSchema(unittest.TestCase):
         """
         Test a nested schema raises a compound (nested) ValidationError.
         """
-        from jsonweb.schema import ObjectSchema, ValidationError
-        from jsonweb.schema.validators import String, Float, Integer
 
         class JobSchema(ObjectSchema):
             title = String()
@@ -120,8 +116,6 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(str(exc.errors["job"].errors["title"]), "Missing required parameter.")
 
     def test_list_schema_error(self):
-        from jsonweb.schema import ObjectSchema, ValidationError
-        from jsonweb.schema.validators import List, String
 
         class PersonSchema(ObjectSchema):
             first_name = String()
@@ -135,8 +129,6 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(1, exc.errors[0].extras["index"])
 
     def test_ensuretype_raises_validation_error(self):
-        from jsonweb.schema import ObjectSchema, ValidationError
-        from jsonweb.schema.validators import EnsureType, String
 
         class Foo(object):
             pass
@@ -155,11 +147,9 @@ class TestJsonSchema(unittest.TestCase):
         """
         Tests bug fix for: http://github.com/boris317/JsonWeb/issues/7
         """
-        from jsonweb.schema import ObjectSchema, validators as v
-        from jsonweb import from_object
 
         class FooSchema(ObjectSchema):
-            bar = v.EnsureType("Bar", optional=True, nullable=True)
+            bar = EnsureType("Bar", optional=True, nullable=True)
 
         @from_object()
         class Bar(object):
@@ -172,8 +162,6 @@ class TestJsonSchema(unittest.TestCase):
         self.assertFalse(ensure_type.required)
 
     def test_attributes_can_be_optional(self):
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import String
 
         class PersonSchema(ObjectSchema):
             first_name = String()
@@ -183,8 +171,6 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(person, PersonSchema().validate(person))
 
     def test_attributes_can_have_default_values(self):
-        from jsonweb.schema import ObjectSchema
-        from jsonweb.schema.validators import String
 
         class PersonSchema(ObjectSchema):
             species = String(default="Human")
@@ -199,9 +185,6 @@ class TestJsonSchema(unittest.TestCase):
 
 class TestEachValidator(unittest.TestCase):
     def test_string_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import String
-
         v = String()
         self.assertEqual("foo", v.validate("foo"))
         with self.assertRaises(ValidationError) as c:
@@ -210,9 +193,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("Expected str got int instead.", str(c.exception))
 
     def test_string_validator_max_len_kw(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import String
-
         v = String(max_len=3)
         self.assertEqual("foo", v.validate("foo"))
         with self.assertRaises(ValidationError) as c:
@@ -221,9 +201,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("String exceeds max length of 3.", str(c.exception))
 
     def test_string_validator_min_len_kw(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import String
-
         v = String(min_len=3)
 
         with self.assertRaises(ValidationError) as c:
@@ -232,9 +209,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("String must be at least length 3.", str(c.exception))
 
     def test_regex_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import Regex
-
         v = Regex(r"^foo[0-9]", max_len=10)
         self.assertEqual("foo12", v.validate("foo12"))
 
@@ -250,9 +224,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("String exceeds max length of 10.", str(c.exception))
 
     def test_integer_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import Integer
-
         v = Integer()
         self.assertEqual(v.validate(42), 42)
         with self.assertRaises(ValidationError) as c:
@@ -261,9 +232,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("Expected int got str instead.", str(c.exception))
 
     def test_float_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import Float
-
         v = Float()
         self.assertEqual(42.0, v.validate(42.0))
         with self.assertRaises(ValidationError) as c:
@@ -272,9 +240,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("Expected float got int instead.", str(c.exception))
 
     def test_boolean_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import Boolean
-
         v = Boolean()
         self.assertEqual(True, v.validate(True))
         with self.assertRaises(ValidationError) as c:
@@ -283,9 +248,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("Expected bool got str instead.", str(c.exception))
 
     def test_number_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import Number
-
         v = Number()
         self.assertEqual(42.0, v.validate(42.0))
         self.assertEqual(42, v.validate(42))
@@ -295,9 +257,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("Expected number got str instead.", str(c.exception))
 
     def test_dict_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import Dict, Number
-
         v = Dict(Number)
         dict_to_test = {"foo": 1, "bar": 1.2}
         self.assertDictEqual(v.validate(dict_to_test), dict_to_test)
@@ -312,9 +271,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("invalid_dict", str(exc.extras["error_type"]))
 
     def test_dict_key_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import Dict, Number, Regex
-
         v = Dict(Number, key_validator=Regex("[a-z]{2}_[A-Z]{2}"))
         dict_to_test = {"en_US": 1}
         self.assertDictEqual(v.validate(dict_to_test), dict_to_test)
@@ -328,9 +284,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("invalid_dict_key", exc.errors["en-US"].extras["error_type"])
 
     def test_list_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import Number, List
-
         v = List(Number)
         self.assertEqual([1, 2, 3], v.validate([1, 2, 3]))
 
@@ -350,9 +303,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("Expected number got str instead.", str(exc.errors[0]))
 
     def test_ensuretype_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import EnsureType
-
         v = EnsureType((int, float))
         self.assertEqual(42.0, v.validate(42.0))
         self.assertEqual(42, v.validate(42))
@@ -365,10 +315,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("invalid_type", exc.extras["error_type"])
 
     def test_datetime_validator(self):
-        from datetime import datetime
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import DateTime
-
         v = DateTime()
         self.assertIsInstance(v.validate("2012-01-01 12:30:00"), datetime)
 
@@ -381,15 +327,10 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("invalid_datetime", exc.extras["error_type"])
 
     def test_nullable_is_true(self):
-        from jsonweb.schema.validators import Integer
-
         v = Integer(nullable=True)
         self.assertEqual(None, v.validate(None))
 
     def test_one_of_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import OneOf
-
         self.assertEqual(OneOf(1, 2, 3).validate(1), 1)
 
         with self.assertRaises(ValidationError) as c:
@@ -401,9 +342,6 @@ class TestEachValidator(unittest.TestCase):
         self.assertEqual("not_one_of", exc.extras["error_type"])
 
     def test_sub_set_of_validator(self):
-        from jsonweb.schema import ValidationError
-        from jsonweb.schema.validators import SubSetOf
-
         self.assertEqual(SubSetOf([1, 2, 3]).validate([1, 3]), [1, 3])
 
         with self.assertRaises(ValidationError) as c:
@@ -417,20 +355,17 @@ class TestEachValidator(unittest.TestCase):
 class TestValidationError(unittest.TestCase):
 
     def test_to_json_with_errors(self):
-        from jsonweb.schema import ValidationError
         e = ValidationError("Boom", {"key": "value"})
 
         expected_dict = {"reason": "Boom", "errors": {"key": "value"}}
         self.assertDictEqual(e.to_json(), expected_dict)
 
     def test_to_json_with_no_errors(self):
-        from jsonweb.schema import ValidationError
         e = ValidationError("Boom")
 
         self.assertEqual(e.to_json(), {"reason": "Boom"})
 
     def test_to_json_with_extras(self):
-        from jsonweb.schema import ValidationError
         e = ValidationError("Boom", {"key": "value"}, foo="bar")
 
         expected_dict = {

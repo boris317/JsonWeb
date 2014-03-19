@@ -1,10 +1,12 @@
 import json
 import unittest
+from jsonweb import dumper, to_object, from_object, loader, encode
+from jsonweb.encode import to_list, JsonWebEncoder
 
-class TestJsonEnecode(unittest.TestCase):
+
+class TestJsonEncode(unittest.TestCase):
     def test_json_object_decorator(self):
-        from jsonweb.encode import to_object, dumper
-                
+
         @to_object(suppress=["foo", "__type__"])
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -18,12 +20,12 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertEqual(json_obj, {"first_name": "shawn", "last_name": "adams"})
         
     def test_json_list_decorator(self):
-        from jsonweb.encode import to_object, to_list, dumper
-                
+
         @to_list()
         class NickNames(object):
             def __init__(self, nicknames):
                 self.nicknames = nicknames
+
             def __iter__(self):
                 return iter(self.nicknames)
             
@@ -38,17 +40,21 @@ class TestJsonEnecode(unittest.TestCase):
         person = Person("shawn", "adams", ["Boss", "Champ"])
         json_obj = json.loads(dumper(person))
         
-        self.assertEqual(json_obj, {"first_name": "shawn", "last_name": "adams", "nicknames": ["Boss", "Champ"]})
+        self.assertEqual(json_obj, {
+            "first_name": "shawn",
+            "last_name": "adams",
+            "nicknames": ["Boss", "Champ"]
+        })
         
     def test_subclass_json_web_encoder(self):
-        from jsonweb.encode import to_object, JsonWebEncoder, dumper
-        
         message = []
+
         class MyJsonWebEncoder(JsonWebEncoder):
             def object_handler(self, obj):
                 message.append("my_object_handler")
                 suppress = obj._encode.suppress
-                json_obj = dict([(k,v) for k,v in obj.__dict__.items() if not k.startswith("_") and k not in suppress])
+                json_obj = dict([(k, v) for k, v in obj.__dict__.items()
+                                 if not k.startswith("_") and k not in suppress])
                 if "__type__" not in suppress:
                     json_obj["__type__"] = obj._encode.__type__
                 return json_obj
@@ -62,12 +68,15 @@ class TestJsonEnecode(unittest.TestCase):
         person = Person("shawn", "adams")
         json_obj = json.loads(dumper(person, cls=MyJsonWebEncoder))
         
-        self.assertEqual(json_obj, {"__type__": "Person", "first_name": "shawn", "last_name": "adams"})
+        self.assertEqual(json_obj, {
+            "__type__": "Person",
+            "first_name": "shawn",
+            "last_name": "adams"
+        })
         self.assertEqual(message[0], "my_object_handler")
         
     def test_methods_dont_get_serialized(self):
-        from jsonweb.encode import to_object, dumper
-        
+
         @to_object()
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -77,16 +86,14 @@ class TestJsonEnecode(unittest.TestCase):
                 
             def foo_method(self):
                 return self.foo
+
         person = Person("shawn", "adams")
-        
         # the dumper call with actually fail if it tries to
         # serialize a method type.
         self.assertIsInstance(dumper(person), str)
 
-        
     def test_supplied_obj_handler(self):
-        from jsonweb.encode import to_object, dumper
-                
+
         def person_handler(obj):
             return {"FirstName": obj.first_name, "LastName": obj.last_name}
         
@@ -103,9 +110,7 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertEqual(json_obj, {"FirstName": "shawn", "LastName": "adams"})
         
     def test_stacked_decorators(self):
-        from jsonweb.encode import to_object, dumper
-        from jsonweb.decode import from_object, loader
-                
+
         def person_handler(cls, obj):
             return cls(
                 obj['first_name'],
@@ -127,8 +132,7 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertTrue(isinstance(person, Person))
         
     def test_attributes_are_suppressed(self):
-        from jsonweb.encode import to_object, dumper
-        
+
         @to_object(suppress=["foo"])
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -141,8 +145,7 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertTrue("foo" not in json_obj)
                 
     def test_suppress__type__attribute(self):
-        from jsonweb.encode import to_object, dumper
-        
+
         @to_object(suppress=["__type__"])
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -155,8 +158,7 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertTrue("__type__" not in json_obj)
         
     def test_suppress_kw_arg_to_dumper(self):
-        from jsonweb.encode import to_object, dumper
-        
+
         @to_object(suppress=["foo"])
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -177,8 +179,7 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertTrue("last_name" in json_obj)
 
     def test_exclude_nulls_kw_arg_to_dumper(self):
-        from jsonweb.encode import to_object, dumper
-        
+
         @to_object()
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -191,8 +192,7 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertTrue("last_name" not in json_obj)
         
     def test_exclude_nulls_kw_args_to_object(self):
-        from jsonweb.encode import to_object, dumper
-        
+
         @to_object(exclude_nulls=True)
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -204,9 +204,8 @@ class TestJsonEnecode(unittest.TestCase):
         json_obj = json.loads(dumper(person))
         self.assertTrue("last_name" not in json_obj)
         
-    def test_exlude_nulls_on_dumper_trumps_to_object(self):
-        from jsonweb.encode import to_object, dumper
-        
+    def test_exclude_nulls_on_dumper_trumps_to_object(self):
+
         @to_object(exclude_nulls=True)
         class Person(object):
             def __init__(self, first_name, last_name):
@@ -219,10 +218,12 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertTrue("last_name" in json_obj)
      
     def test_supplied_handlers_kw_to_dumper(self):
-        from jsonweb.encode import to_object, to_list, dumper
-        
+
         def person_handler(obj):
-            return {"FirstName": obj.first_name, "LastName": obj.last_name, "Titles": obj.titles}
+            return {"FirstName": obj.first_name,
+                    "LastName": obj.last_name,
+                    "Titles": obj.titles}
+
         def titles_handler(obj):
             return obj.titles
         
@@ -238,16 +239,21 @@ class TestJsonEnecode(unittest.TestCase):
             def __init__(self, *titles):
                 self.titles = titles
 
-            
         person = Person("Joe", "Smith", Titles("Mr", "Dr"))
-        json_obj = json.loads(dumper(person, handlers={"Person": person_handler, "Titles": titles_handler}))
+        json_obj = json.loads(dumper(person, handlers={
+            "Person": person_handler,
+            "Titles": titles_handler
+        }))
         
-        self.assertEqual(json_obj, {"FirstName": "Joe", "LastName": "Smith", "Titles": ["Mr", "Dr"]})
+        self.assertEqual(json_obj, {
+            "FirstName": "Joe",
+            "LastName": "Smith",
+            "Titles": ["Mr", "Dr"]
+        })
         
     def test_handler_decorator_for_object(self):
-        from jsonweb import encode
-                
-        @encode.to_object()
+
+        @to_object()
         class Person(object):
             def __init__(self, first_name, last_name):
                 self.first_name = first_name
@@ -263,8 +269,7 @@ class TestJsonEnecode(unittest.TestCase):
         self.assertEqual(json_obj, {"FirstName": "shawn", "LastName": "adams"})
         
     def test_handler_decorator_for_list(self):
-        from jsonweb import encode
-        
+
         @encode.to_list()
         class ValueList(object):
             def __init__(self, *values):
@@ -273,5 +278,4 @@ class TestJsonEnecode(unittest.TestCase):
             def to_list(self):
                 return self.values
             
-        self.assertEqual(encode.dumper(ValueList(1,2,3)), "[1, 2, 3]")
-        
+        self.assertEqual(encode.dumper(ValueList(1 ,2, 3)), "[1, 2, 3]")
