@@ -4,10 +4,11 @@ JsonWeb Changelog
 Version 0.8
 -------------
 
--- Added :class:`~jsonweb.schema.validators.Dict`
--- Added `default` kw arg to validators
--- Added `error_type`` key to ``extras`` dict for validation errors raised
-   by all validators. Which will show up in JSON serialization of the error.
+-- Added :class:`~jsonweb.validators.Dict`
+-- Added ``default`` kw arg to validators
+-- Added ``reason_code`` to :class:`~jsonweb.validators.ValidationError`
+-- Refactored the ``jsonweb.schema`` package into `~jsonweb.validators` and
+   `~jsonweb.schema` modules. (Breaks backwards compatibility)
 
 
 Version 0.7.1

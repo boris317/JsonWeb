@@ -38,12 +38,13 @@ You can make any field optional by setting ``optional`` to :class:`True`.
 .. warning::
 
     The field is only optional at the schema level. If you've bound a schema to
-    a class via :func:`from_object` and the underlying class requires that field
-    a :class:`ObjectAttributeError` will be raised if missing.
+    a class via :func:`~jsonweb.decode.from_object` and the underlying class requires
+    that field a :class:`~jsonweb.decode.ObjectAttributeError` will be raised if
+    missing.
 
 As you can see its fine to pass a class name as a string, which we have done for
 the :class:`Job` class above. We must later define :class:`Job` and decorate it
-with :func:`jsonweb.decode.from_object` ::
+with :func:`~jsonweb.decode.from_object` ::
 
     >>> class JobSchema(ObjectSchema):
     ...    id = Integer()

@@ -36,7 +36,7 @@ class ValidationError(JsonWebError):
     def __init__(self, reason, reason_code=None, errors=None, **extras):
         """
         :param reason: A nice message describing what was not valid
-        :param reason_code: A programmatic friendly reason code
+        :param reason_code: programmatic friendly reason code
         :param errors: A ``list`` or ``dict`` of nested ``ValidationError``
         :param extras: Any extra info about the error you want to convey
         """
@@ -124,6 +124,8 @@ class BaseValidator(object):
 
 class Dict(BaseValidator):
     """
+    .. versionadded:: 0.8
+
     Validates a dict of things. The Dict constructor accepts
     a validator and each value in the dict will be validated
     against it ::
