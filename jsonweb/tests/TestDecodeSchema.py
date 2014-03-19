@@ -24,7 +24,8 @@ class TestDecodeSchema(unittest.TestCase):
                 self.first_name = first_name
                 self.last_name = last_name
         
-        json_str = '{"__type__": "Person", "first_name": "shawn", "last_name": "adams"}'                
+        json_str = '{"__type__": "Person", "first_name": "shawn", ' \
+                   '"last_name": "adams"}'
         person = json.loads(json_str, object_hook=object_hook())
         self.assertTrue(isinstance(person, Person))
         
@@ -45,10 +46,10 @@ class TestDecodeSchema(unittest.TestCase):
                 self.last_name = last_name
         
         json_str = '{"__type__": "Person", "last_name": "adams"}'
-        with self.assertRaises(ValidationError) as context:
-            person = loader(json_str)        
-        with self.assertRaises(ObjectDecodeError) as context:
-            person = loader(json_str, validate=False)
+        with self.assertRaises(ValidationError):
+            loader(json_str)
+        with self.assertRaises(ObjectDecodeError):
+            loader(json_str, validate=False)
 
     def test_decode_with_schema_raises_error(self):
         """
