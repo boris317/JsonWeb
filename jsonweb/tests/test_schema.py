@@ -1,6 +1,6 @@
 import unittest
 from jsonweb import from_object
-from jsonweb.schema import ObjectSchema
+from jsonweb.schema import ObjectSchema, SchemaMeta
 from jsonweb.validators import String, Float, Integer, ValidationError, List, \
     EnsureType
 
@@ -63,11 +63,22 @@ class TestSchema(unittest.TestCase):
         self.assertTrue("id" in exc.errors)
         self.assertTrue("test" in exc.errors)
 
-        self.assertEqual("Missing required parameter.", str(exc.errors["last_name"]))
-        self.assertEqual("Missing required parameter.", str(exc.errors["id"]))
-        self.assertEqual("Missing required parameter.", str(exc.errors["test"]))
+        self.assertEqual("Missing required parameter.",
+                         str(exc.errors["last_name"]))
 
-        obj = {"first_name": 10, "last_name": "Adams", "id": 1, "test": "bad type"}
+        self.assertEqual("Missing required parameter.",
+                         str(exc.errors["id"]))
+
+        self.assertEqual("Missing required parameter.",
+                         str(exc.errors["test"]))
+
+        obj = {
+            "id": 1,
+            "first_name": 10,
+            "last_name": "Adams",
+            "test": "bad type"
+        }
+
         with self.assertRaises(ValidationError) as c:
             schema.validate(obj)
 
@@ -76,8 +87,11 @@ class TestSchema(unittest.TestCase):
         self.assertTrue("first_name" in exc.errors)
         self.assertTrue("test" in exc.errors)
 
-        self.assertEqual("Expected str got int instead.", str(exc.errors["first_name"]))
-        self.assertEqual("Expected float got str instead.", str(exc.errors["test"]))
+        self.assertEqual("Expected str got int instead.",
+                         str(exc.errors["first_name"]))
+
+        self.assertEqual("Expected float got str instead.",
+                         str(exc.errors["test"]))
 
     def test_compound_error(self):
         """
@@ -111,8 +125,11 @@ class TestSchema(unittest.TestCase):
         exc = c.exception
         self.assertTrue("job" in exc.errors)
         self.assertEqual(len(exc.errors["job"].errors), 2)
-        self.assertEqual(str(exc.errors["job"].errors["id"]), "Missing required parameter.")
-        self.assertEqual(str(exc.errors["job"].errors["title"]), "Missing required parameter.")
+        self.assertEqual(str(exc.errors["job"].errors["id"]),
+                         "Missing required parameter.")
+
+        self.assertEqual(str(exc.errors["job"].errors["title"]),
+                         "Missing required parameter.")
 
     def test_list_schema_error(self):
 
@@ -120,14 +137,23 @@ class TestSchema(unittest.TestCase):
             first_name = String()
             last_name = String()
 
-        persons = [{"first_name": "shawn", "last_name": "adams"}, {"first_name": "luke"}]
+        persons = [
+            {
+               "first_name": "shawn",
+               "last_name": "adams"
+            },
+            {
+                "first_name": "luke"
+            }
+        ]
+
         with self.assertRaises(ValidationError) as c:
             List(PersonSchema()).validate(persons)
 
         exc = c.exception
         self.assertEqual(1, exc.errors[0].extras["index"])
 
-    def test_ensuretype_raises_validation_error(self):
+    def test_EnsureType_raises_validation_error(self):
 
         class Foo(object):
             pass
@@ -142,7 +168,7 @@ class TestSchema(unittest.TestCase):
         exc = c.exception
         self.assertEqual(str(exc.errors["id"]), "Expected Foo got int instead.")
 
-    def test_ensuretype_kw_arguments_stick_around(self):
+    def test_EnsureType_kw_arguments_stick_around(self):
         """
         Tests bug fix for: http://github.com/boris317/JsonWeb/issues/7
         """
@@ -181,3 +207,30 @@ class TestSchema(unittest.TestCase):
         )
         self.assertEqual(person.get("species"), "Human")
 
+    def test_create(self):
+        schema_cls = ObjectSchema.create("MySchema", {
+            "first-name": String(),
+            "last-name": String(optional=True)
+        })
+
+        self.assertEqual(type(schema_cls), SchemaMeta)
+        self.assertIsInstance(schema_cls(), ObjectSchema)
+
+        with self.assertRaises(ValidationError) as c:
+            schema_cls().validate({'first-name': 1})
+
+        self.assertIn('first-name', c.exception.errors)
+
+    def test_kw_args_are_passed_correctly(self):
+
+        class PersonSchema(ObjectSchema):
+            first_name = String()
+            last_name = String(optional=True)
+
+        schema = PersonSchema(default="foo", optional=True,
+                              nullable=True, reason_code="BECAUSE")
+
+        self.assertEqual("foo", schema.default)
+        self.assertEqual("BECAUSE", schema.reason_code)
+        self.assertTrue(schema.nullable)
+        self.assertFalse(schema.required)

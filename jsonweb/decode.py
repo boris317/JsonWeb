@@ -2,7 +2,13 @@
 Sometimes it would be nice to have :func:`json.loads` return class instances.
 For example if you do something like this ::
 
-    person = json.loads('{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}')
+    person = json.loads('''
+    {
+        "__type__": "Person",
+        "first_name": "Shawn",
+        "last_name": "Adams"
+    }
+    ''')
     
 it would be pretty cool if instead of ``person`` being a :class:`dict` it was
 an instance of a class we defined called :class:`Person`. Luckily the python
@@ -14,15 +20,22 @@ accomplish the awesomeness you are about to witness. Lets turn that
 ``person`` :class:`dict` into a proper :class:`Person` instance. ::
 
     >>> from jsonweb.decode import from_object, loader
-    >>>
+
     >>> @from_object()
     ... class Person(object):
     ...     def __init__(self, first_name, last_name):
     ...         self.first_name = first_name
     ...         self.last_name = last_name
     ...
-    >>> person_json = '{"__type__": "Person", "first_name": "Shawn", "last_name": "Adams"}'
-    >>> person = loader(person_json)
+
+    >>> person = loader('''
+    ... {
+    ...     "__type__": "Person",
+    ...     "first_name": "Shawn",
+    ...     "last_name": "Adams"
+    ... }
+    ... ''')
+
     >>> print type(person)
     <class 'Person'>
     >>> print person.first_name
@@ -140,8 +153,8 @@ class _ObjectHandlers(object):
         self.set(name, self.__merge_tuples((handler, cls, schema), 
                                            handler_tuple))
                  
-    def _update_handler_deferred(self, name, cls=None, 
-                                 handler=None, schema=None):
+    def update_handler_deferred(self, name, cls=None,
+                                handler=None, schema=None):
         """
         If an entry does not exist in __handlers an entry will be added to
         __deferred_updates instead. Then when add_handler is finally called

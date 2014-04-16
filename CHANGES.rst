@@ -1,8 +1,13 @@
 JsonWeb Changelog
 =================
 
-Version 0.8
+Version 0.8.1
 -------------
+-- Added :meth:`~jsonweb.schema.ObjectSchema.create` which be used to create
+   object schemas in a non-declarative style.
+
+Version 0.8
+-----------
 
 -- Added :class:`~jsonweb.validators.Dict`
 -- Added ``default`` kw arg to validators

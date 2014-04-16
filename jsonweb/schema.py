@@ -1,9 +1,13 @@
 # noinspection PyUnresolvedReferences
 """
+Declarative
+-----------
+
 :mod:`jsonweb.schema` provides a layer of validation before :mod:`json.decode`
-returns your object instances. It can also be used simply to validate the
-resulting python data structures returned from :func:`json.loads`. Here is an
-example of validating the structure of a python dict::
+returns your object instances. It can also simply  be used to validate the
+resulting python data structures returned from :func:`json.loads`. It's main
+use is through a declarative style api. Here is an example of validating the
+structure of a python dict::
 
     >>>
     >>> from jsonweb.schema import ObjectSchema, ValidationError
@@ -37,14 +41,14 @@ You can make any field optional by setting ``optional`` to :class:`True`.
 
 .. warning::
 
-    The field is only optional at the schema level. If you've bound a schema to
-    a class via :func:`~jsonweb.decode.from_object` and the underlying class requires
-    that field a :class:`~jsonweb.decode.ObjectAttributeError` will be raised if
-    missing.
+    The field is only optional at the schema level. If you've bound a schema
+    to a class via :func:`~jsonweb.decode.from_object` and the underlying
+    class requires that field a :class:`~jsonweb.decode
+    .ObjectAttributeError` will be raised if missing.
 
-As you can see its fine to pass a class name as a string, which we have done for
-the :class:`Job` class above. We must later define :class:`Job` and decorate it
-with :func:`~jsonweb.decode.from_object` ::
+As you can see its fine to pass a class name as a string, which we have done
+for the :class:`Job` class above. We must later define :class:`Job` and
+decorate it with :func:`~jsonweb.decode.from_object` ::
 
     >>> class JobSchema(ObjectSchema):
     ...    id = Integer()
@@ -82,25 +86,51 @@ with :func:`~jsonweb.decode.from_object` ::
     >>> person = loader(person_json)
     >>> print person
     <Person name="Bob" job="Police Officer">
+
+Non-Declarative
+---------------
+
+.. versionadded:: 0.8.1
+
+
+Use the staticmethod :meth:`ObjectSchema.create` to build object schemas in
+a non declarative style. Handy for validating dicts with string keys that
+are not valid python identifiers (e.g "first-name")::
+
+    MySchema = ObjectSchema.create("MySchema", {
+        "first-name": String(),
+        "last-name": String(optional=True)
+    })
+
 """
 
 from jsonweb.py3k import PY3k, items
-from jsonweb.validators import BaseValidator, _Errors, \
-    ValidationError, isinstance_or_raise
+from jsonweb.validators import BaseValidator, _Errors, ValidationError, \
+    isinstance_or_raise
 
 
 class SchemaMeta(type):
-    def __new__(mcs, class_name, bases, class_dict):
-        fields = []
-        for k, v in items(class_dict):
-            if hasattr(v, "_validate"):
-                fields.append(k)
-        class_dict["_fields"] = fields
-        return type.__new__(mcs, class_name, bases, class_dict)
+    def __new__(mcs, cls_name, bases, cls_dict):
+        cls_dict["_fields"] = [k for k, v in items(cls_dict)
+                               if hasattr(v, "_validate")]
+
+        return type.__new__(mcs, cls_name, bases, cls_dict)
 
 
 class ObjectSchema(BaseValidator):
     __metaclass__ = SchemaMeta
+
+    @staticmethod
+    def create(name, schema_dict):
+        """
+        Dynamically create an ObjectSchema class.
+
+        :param name: The name of your generated schema class
+        :param schema_dict: dict of validators that will make up this schema
+        :return: A subclass of :class:`ObjectSchema`
+        """
+        schema_dict.update(dict(vars(ObjectSchema)))
+        return SchemaMeta(name, (ObjectSchema,), schema_dict)
 
     def to_json(self):
         return super(ObjectSchema, self).to_json(
@@ -140,7 +170,7 @@ def bind_schema(type_name, schema_obj):
     decorated by :func:`from_object`.
     """
     from jsonweb.decode import _default_object_handlers
-    _default_object_handlers._update_handler_deferred(type_name,
+    _default_object_handlers.update_handler_deferred(type_name,
                                                       schema=schema_obj)
 
 if PY3k:

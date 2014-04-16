@@ -1,8 +1,9 @@
-:mod:`jsonweb.schema`
-=============================
 
 .. contents:: Table of Contents
    :depth: 3
+
+:mod:`jsonweb.schema`
+=============================
 
 .. automodule:: jsonweb.schema
 
