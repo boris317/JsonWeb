@@ -106,7 +106,7 @@ def __inspect_for_handler(cls):
 def to_object(cls_type=None, suppress=None, handler=None, exclude_nulls=False):
     """
     To make your class instances JSON encodable decorate them with
-    :func:`json_object`. The python built-in :py:func:`dir` is called on the
+    :func:`to_object`. The python built-in :py:func:`dir` is called on the
     class instance to retrieve key/value pairs that will make up the JSON
     object (*Minus any attributes that start with an underscore or any
     attributes that were specified via the* ``suppress`` *keyword argument*).
