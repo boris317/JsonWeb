@@ -114,6 +114,10 @@ class SchemaMeta(type):
         cls_dict["_fields"] = [k for k, v in items(cls_dict)
                                if hasattr(v, "_validate")]
 
+        for base in bases:
+            if hasattr(base, "_fields"):
+                cls_dict["_fields"].extend(base._fields)
+
         return type.__new__(mcs, cls_name, bases, cls_dict)
 
 
@@ -171,7 +175,7 @@ def bind_schema(type_name, schema_obj):
     """
     from jsonweb.decode import _default_object_handlers
     _default_object_handlers.update_handler_deferred(type_name,
-                                                      schema=schema_obj)
+                                                     schema=schema_obj)
 
 if PY3k:
     ObjectSchema = SchemaMeta(

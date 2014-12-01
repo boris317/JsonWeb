@@ -234,3 +234,25 @@ class TestSchema(unittest.TestCase):
         self.assertEqual("BECAUSE", schema.reason_code)
         self.assertTrue(schema.nullable)
         self.assertFalse(schema.required)
+
+    def test_subclasses_inherit_validators_from_base_schema(self):
+
+        class BaseSchema(ObjectSchema):
+            foo = String()
+
+        class BarSchema(BaseSchema):
+            bar = String()
+
+        schema = BarSchema()
+
+        # assert _fields are merged
+        self.assertIn("foo", schema._fields)
+        self.assertIn("bar", schema._fields)
+
+        with self.assertRaises(ValidationError) as c:
+            schema.validate({})
+
+        # assert validators run correctly
+        exc = c.exception
+        self.assertIn("foo", exc.errors)
+        self.assertIn("bar", exc.errors)
