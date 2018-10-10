@@ -29,5 +29,5 @@ Add JSON (de)serialization to your python objects ::
 
     JsonWeb is still very much under development. Things will change.
 
-See  `documentation <http://www.jsonweb.info/>`_
+See  `documentation <https://jsonweb.readthedocs.io/>`_
 
